@@ -5,7 +5,7 @@
 
 #include <SoftwareSerial.h>
 
-Magnetometer* magnetometer;
+extern Magnetometer* magnetometer;
 
 void read_angle() {
   float measurement = magnetometer->get_angle();
