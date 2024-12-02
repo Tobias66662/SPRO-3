@@ -29,30 +29,18 @@ void check_direction(void){
     }
 
     if((target_point_lat*sin(theta))>(p-target_point_long*cos(theta))){ // if true, target point is above the line with a slope that's the same as the direction vector of the vehicle
-        if((azimuth>=0)&&(azimuth<90)){
+        if((azimuth>=0)&&(azimuth<180)){ // if pointed East
             direction_f=0;
         }
-        if((azimuth>=90)&&(azimuth<180)){
-            direction_f=0;
-        }
-        if((azimuth>=180)&&(azimuth<270)){
-            direction_f=1;
-        }
-        if((azimuth>=270)&&(azimuth<=360)){
+        if((azimuth>=180)&&(azimuth<360)){ // if pointed West
             direction_f=1;
         }
     }
     if((target_point_lat*sin(theta))<(p-target_point_long*cos(theta))){ // if true, target point is below the line with a slope that's the same as the direction vector of the vehicle
-        if((azimuth>=0)&&(azimuth<90)){
+        if((azimuth>=0)&&(azimuth<180)){ // if pointed East
             direction_f=1;
         }
-        if((azimuth>=90)&&(azimuth<180)){
-            direction_f=1;
-        }
-        if((azimuth>=180)&&(azimuth<270)){
-            direction_f=0;
-        }
-        if((azimuth>=270)&&(azimuth<=360)){
+        if((azimuth>=180)&&(azimuth<360)){ // if pointed West
             direction_f=0;
         }
     }
