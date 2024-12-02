@@ -20,15 +20,9 @@ void check_direction(void){
     float theta = (azimuth)*(PI/180); // getting the angle between the normal line to the vector of the vehicle direction and the horizontal axis
 
     float p;
-    if (theta>PI){
-      theta = theta-PI;
-      p = long_gps*cos(theta)+lat_gps*sin(theta);
-    }
-    else{
-      p = long_gps*cos(theta)+lat_gps*sin(theta);
-    }
+    p = long_gps*cos(theta)+lat_gps*sin(theta);
 
-    if((target_point_lat*sin(theta))>(p-target_point_long*cos(theta))){ // if true, target point is above the line with a slope that's the same as the direction vector of the vehicle
+    if((target_point_lat)>( (p-target_point_long*cos(theta)) / (sin(theta)) )){ // if true, target point is above the line with a slope that's the same as the direction vector of the vehicle
         if((azimuth>=0)&&(azimuth<180)){ // if pointed East
             direction_f=0;
         }
@@ -36,7 +30,7 @@ void check_direction(void){
             direction_f=1;
         }
     }
-    if((target_point_lat*sin(theta))<(p-target_point_long*cos(theta))){ // if true, target point is below the line with a slope that's the same as the direction vector of the vehicle
+    if((target_point_lat)<( (p-target_point_long*cos(theta)) / (sin(theta)) )){ // if true, target point is below the line with a slope that's the same as the direction vector of the vehicle
         if((azimuth>=0)&&(azimuth<180)){ // if pointed East
             direction_f=1;
         }
