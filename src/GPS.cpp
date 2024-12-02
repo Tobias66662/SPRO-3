@@ -8,6 +8,7 @@
 #include <Adafruit_GPS.h>   // GPS library
 #include <SoftwareSerial.h> // Software Serial library that lets us create a new serial port to talk to the GPS sensor.
                             // This way we can use any digital pin to connect to the GPS's rx and tx pins.
+#include "gps.h"
 
 // Connect the GPS Power pin to 5V
 // Connect the GPS Ground pin to ground
@@ -64,6 +65,8 @@ float array1_lat[60]; // latitude and longitude coordinate for the points on the
 float array1_long[60];// ^^
 float array2_lat[60]; // latitude and longitude coordinate for the points on the bottom line
 float array2_long[60];// ^^
+float target_point_lat=0;
+float target_point_long=0;
 
 // Array sizes (dependent on ARRAY_RESOLUTION)
 int n1 = 0; // Array size for top line
@@ -74,6 +77,7 @@ float lat_gps = 0;
 float long_gps = 0;
 
 uint32_t timer = millis(); // will be removed once code is integrated
+
 //====================
 // Function Definitions
 //====================
@@ -83,6 +87,9 @@ void gradient_and_intercept_calc(void);
 void create_arrays(void);
 void GPS_setup(void);
 
+//====================
+// Function Prototypes
+//====================
 void GPS_setup(void){ // initializer
   Serial.begin(9600); // initialising the serial monitor
 
@@ -101,9 +108,6 @@ void GPS_setup(void){ // initializer
   mySerial.println(PMTK_Q_RELEASE);
 }
 
-//====================
-// Function Prototypes
-//====================
 void store_coordinates(void){
 
   char c = GPS.read(); // storing the characters coming through the serial bus in a 'c' char.
@@ -272,12 +276,12 @@ void create_arrays(void){ // Used in boundary_check()
 
 // TO-DO LIST: 
 // 1.Remove arrays and move the calculation of the points along the top and bottom line to the main navigation sequence code. This will massively optimise the program.
-// Also keep the function and only calculate the arrays size n1 and n2
-//2.
+// Also keep the function and only calculate the arrays size n1 and n2, which will be used for the calculation of points.
 
-// Notes: when referring to 'top' line and 'bottom' line, these are the top(North) and bottom(South) boundaries of the area of operation.
+// Notes: when referring to 'top' line and 'bottom' line, these are the top(North) and bottom(South) boundaries of the area of operation (AO).
 
-// Sequence of functions:
+// Sequence of functions for main.cpp:
 // store_coordinates();
-// boundary_check();
+// boundary_check(); // contains GPS_setup(), which may not work (test it)
+// All of these need to be placed in a loop and in the order mentioned.
 

@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "ultrasonic.h"
 #include "magnetometer.h"
+#include "direction.h"
+#include "gps.h"
 #include <Adafruit_GPS.h>
 
 #include <SoftwareSerial.h>
@@ -22,7 +24,12 @@ void setup() {
 }
 
 void loop() {
-	
-
+  // debugging vv
+  Serial.println("Test: ");
+  Serial.println(direction_f);
+  store_coordinates();
+  boundary_check();
+  check_direction();
+  // debugging ^^
   delay(1000);
 }

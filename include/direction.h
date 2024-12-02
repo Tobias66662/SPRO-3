@@ -3,5 +3,6 @@
 #define _DIRECTION_H_
 
 extern bool direction_f;
+extern void check_direction();
 
 #endif
