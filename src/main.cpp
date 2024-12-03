@@ -9,7 +9,7 @@
 
 extern Magnetometer* magnetometer;
 
-bool phase1_f = 0;
+bool phase_one_f = 0; // 0 for we are not done with phase one, 1 for we are done with phase one
 
 void phase_one(void);
 void phase_two(void);
@@ -31,7 +31,7 @@ void setup() {
 void loop() {
 
  phase_one();
- if (phase1_f = 1){
+ if (phase_one_f = 1){
   phase_two();
  }
 
@@ -40,10 +40,10 @@ void loop() {
 void phase_one(void){
 
 for(int i=0;i<n1;i++){
-  // bla bla I will finish this tomorrow
+  // bla bla I will finish this tomorrow. It will have the gps store cooridnates here, direction check, PD control and object detection functions
 }
 
-phase1_f = 1; // phase one done
+phase_one_f = 1; // phase one done
 }
 
 void phase_two(void){
