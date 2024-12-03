@@ -9,6 +9,11 @@
 
 extern Magnetometer* magnetometer;
 
+bool phase1_f = 0;
+
+void phase_one(void);
+void phase_two(void);
+
 void read_angle() {
   float measurement = magnetometer->get_angle();
   if(measurement != -1){
@@ -24,12 +29,23 @@ void setup() {
 }
 
 void loop() {
-  // debugging vv
-  Serial.println("Test: ");
-  Serial.println(direction_f);
-  store_coordinates();
-  boundary_check();
-  check_direction();
-  // debugging ^^
-  delay(1000);
+
+ phase_one();
+ if (phase1_f = 1){
+  phase_two();
+ }
+
+}
+
+void phase_one(void){
+
+for(int i=0;i<n1;i++){
+  // bla bla I will finish this tomorrow
+}
+
+phase1_f = 1; // phase one done
+}
+
+void phase_two(void){
+
 }
