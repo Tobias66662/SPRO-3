@@ -18,8 +18,8 @@ extern float long_gps;
 extern float target_point_lat;
 extern float target_point_long;
 
-extern void boundary_check();
-extern void store_coordinates();
+void boundary_check();
+void store_coordinates();
 
 #endif
 
