@@ -31,7 +31,7 @@ void setup() {
 void loop() {
 
  phase_one();
- if (phase_one_f = 1){
+ if (phase_one_f == 1){
   phase_two();
  }
 
