@@ -10,21 +10,27 @@ void Magnetometer::magnetometer_init() {
     offset[0] = offset[1] = offset[2] = 0;
     bool success = true;
     
-    success &= write_register(CTRLR0, 0x80); delay(50); // refills capacitor
-    success &= write_register(CTRLR0, 0x20); delay(50); // starts the SET action
-    unsigned int* measure = read_values();
+    success &= write_register(CTRLR0, 0x80); delay(60); // refills capacitor
+    success &= write_register(CTRLR0, 0x20); delay(10); // starts the SET action
+    uint16_t* measure = read_values();
 
-    success &= write_register(CTRLR0, 0x80); delay(50); // refills capacitor
-    success &= write_register(CTRLR0, 0x40); delay(50); // starts the SET action
-    unsigned int* measure2 = read_values();
+    success &= write_register(CTRLR0, 0x80); delay(60); // refills capacitor
+    success &= write_register(CTRLR0, 0x40); delay(10); // starts the SET action
+    uint16_t* measure2 = read_values();
 
     if (success && measure != nullptr && measure2 != nullptr){
-            offset[0] = (float)(measure[0] + measure2[0]) * 0.5;
-            offset[1] = (float)(measure[1] + measure2[1]) * 0.5;
-            offset[2] = (float)(measure[2] + measure2[2]) * 0.5;    
+            offset[0] = ((float)measure[0] + (float)measure2[0]) * CONVERSION * 0.5;
+            offset[1] = ((float)measure[1] + (float)measure2[1]) * CONVERSION * 0.5;
+            offset[2] = ((float)measure[2] + (float)measure2[2]) * CONVERSION * 0.5;    
+
+            // Serial.print(offset[0]); Serial.print(" "); Serial.print(offset[1]); Serial.print(" "); Serial.print(offset[2]); Serial.print(" ");
+            // Serial.println("Object offset");
     }
 
     delete measure; delete measure2;
+
+    success &= write_register(CTRLR0, 0x40); delay(10); // starts the SET action
+    success &= write_register(0x08, 0x00); delay(10); // starts the SET action
 }
 
 bool Magnetometer::write_register(unsigned char address, unsigned char data = 0) {
@@ -40,7 +46,7 @@ bool Magnetometer::write_register(unsigned char address, unsigned char data = 0)
     return !error;
 }
 
-unsigned int* Magnetometer::read_values() {
+uint16_t* Magnetometer::read_values() {
     if (!write_register(CTRLR0, 0x01) 
         || !write_register(STR0)
         || i2c_start(SLA_R)) // initiates a data acquisition from status register and switches to read
@@ -58,12 +64,14 @@ unsigned int* Magnetometer::read_values() {
 
     if (i2c_readNak() && (!write_register(0x00) || !i2c_start(SLA_R))) // setting pointer to the first data bit and switches to read
     {
-        unsigned int* result = new unsigned int[SIZE];
-        result[0] = i2c_readAck() | ((unsigned int)i2c_readAck() << 8);
-        result[1] = i2c_readAck() | ((unsigned int)i2c_readAck() << 8);
-        result[2] = i2c_readAck() | ((unsigned int)i2c_readNak() << 8);
+        uint16_t* measure = new uint16_t[SIZE];
+        measure[0] = i2c_readAck() | ((uint16_t)i2c_readAck() << 8);
+        measure[1] = i2c_readAck() | ((uint16_t)i2c_readAck() << 8);
+        measure[2] = i2c_readAck() | ((uint16_t)i2c_readNak() << 8);
 
-        return result;
+        // Serial.print(measure[0]); Serial.print(" "); Serial.print(measure[1]); Serial.print(" "); Serial.print(measure[2]); Serial.print(" ");
+        // Serial.println("Object raw");
+        return measure;
     } else {
         return nullptr;
     }
@@ -74,13 +82,14 @@ float* Magnetometer::get_measurement() {
         return nullptr;
     }
 
-    unsigned int* measure = read_values();
-    if (read_values() == nullptr) {
+    uint16_t* measure = read_values();
+    if (measure == nullptr) {
         return nullptr;
     }
-        result[0] = (float)(measure[0] - offset[0]) * CONVERSION;
-        result[1] = (float)(measure[1] - offset[1]) * CONVERSION;
-        result[2] = (float)(measure[2] - offset[2]) * CONVERSION;
+
+    result[0] =  CONVERSION * (float)measure[0] - 16060.30;
+    result[1] =  CONVERSION * (float)measure[1] - 16000.73;
+    result[2] =  CONVERSION * (float)measure[2] - 16066.65;
 
     delete measure;
     return result;
@@ -92,30 +101,33 @@ float Magnetometer::get_angle() {
         return -1;
     }
 
+    // Serial.print(result[0]); Serial.print(" "); Serial.print(result[1]); Serial.print(" "); Serial.print(result[2]); Serial.print(" ");
+    // Serial.println("Object readings");
+
     float temp0 = 0;
     float temp1 = 0;
     float deg = 0;
 
     if(result[0] < 0) {
         if (result[1] > 0) {
-          //Quadrant 1
+          // NW
           temp0 = result[1];
           temp1 = -result[0];
           deg = 90 - atan(temp0 / temp1) * (180 / PI);
         } else {
-          //Quadrant 2
+          // SW
           temp0 = -result[1];
           temp1 = -result[0];
           deg = 90 + atan(temp0 / temp1) * (180 / PI);
         }
     } else {
         if (result[1] < 0) {
-          //Quadrant 3
+          // SE
           temp0 = -result[1];
           temp1 = result[0];
           deg = 270 - atan(temp0 / temp1) * (180 / PI);
         } else {
-          //Quadrant 4
+          // NE
           temp0 = result[1];
           temp1 = result[0];
           deg = 270 + atan(temp0 / temp1) * (180 / PI);
@@ -129,4 +141,9 @@ float Magnetometer::get_angle() {
     }
 
     return deg;
+}
+
+bool Magnetometer::is_north() {
+    get_measurement();
+    return (result[0] < 0 && result[1] > 0) || (result[0] >= 0 && result[1] <= 0);
 }

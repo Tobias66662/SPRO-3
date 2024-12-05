@@ -11,20 +11,21 @@
 #define SLA_R (0x30<<1) | I2C_READ // device ID 0x30 with a read (1) bit
 
 #define SIZE 3 // three coordinates
-#define CONVERSION 0.48828125f
+#define CONVERSION 0.48828125
 #define DECLINATION 5.11f // magnetic declination in DK
 
 class Magnetometer {
     public:
     Magnetometer();
-    void magnetometer_init();
     float* get_measurement();
     float get_angle();
+    bool is_north();
 
 
     private:
+    void magnetometer_init();
     bool write_register(unsigned char address, unsigned char data);
-    unsigned int* read_values();
+    uint16_t* read_values();
     
     float offset[3];
     float result[3];

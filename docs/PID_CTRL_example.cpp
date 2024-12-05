@@ -1,12 +1,35 @@
+volatile float millis = 0;
+unsigned long long prevMillis = 0;
+volatile const int gaps = 13; // gaps on the encoder wheel
+volatile int change = 0;
+volatile bool newChange = 0;
+volatile unsigned long int time = 0;
+
+// occurs whenever octocoupler's signal is broken
+void ISR_0(int TIMER1_CAPT_vect, int ICR1, int TCNT1)
+{
+  time += ICR1;
+  change++;
+  newChange = 1;
+  TCNT1 = 0;
+}
+
+void ISR_1(int TIMER2_COMPA_vect)
+{ // change the 0 to 1 for timer1 and 2 for timer2
+  // interrupt commands here
+  millis += 0.5;
+}
+
+// timer overflow event
+void ISR_2(int TIMER1_OVF_vect, int ICR1, int TCNT1)
+{
+  time += ICR1;
+  TCNT1 = 0;
+}
+
 int main() {
     //global
     #define slopeWidth 90
-
-    volatile float millis = 0;
-    unsigned long long prevMillis = 0;
-    volatile const int gaps = 13;
-    volatile int change = 0;
-    volatile int newChange = 0;
 
     float slopeTab[100];
     int slopeIndex = 0;
@@ -84,6 +107,8 @@ int main() {
         integral_part += diff * ki * change_time / 1000;
         proportional_part = diff * kp;
         motorPower = integral_part + proportional_part;
+        
+        // saturation guard
         if (motorPower < 0)
         {
             motorPower = 0;
@@ -105,5 +130,5 @@ int main() {
     }
     OCR0A = 255;
     float totalTime = millis;
-    current_distance =0.932* change * ((0.06565 * 3.14 * 13) / (gaps * 49));
+    current_distance = 0.932 * change * ((0.06565 * 3.14 * 13) / (gaps * 49)); // calculating the arc
 }
