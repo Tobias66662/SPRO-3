@@ -70,12 +70,10 @@ float Navigation::get_offset() const {
     return offset;
 }
 
-void motor_control(int target) {
+void motor_control(int target = 0) {
     int prevT = 0;
     int eintegral = 0;
     int eprev = 0;
-
-    int target = 0;
 
     float kp = 1;
     float kd = 0.025;
