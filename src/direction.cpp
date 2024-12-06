@@ -13,10 +13,10 @@ bool direction_f = 0; // flag returning which direction the vehicle should turn 
 Magnetometer* magnetometer;
 
 void check_direction(void);
+void check_angle(void);
 
 void check_direction(void){
-    float azimuth = magnetometer->get_angle(); // why doesn't this work?? I included the "magnetometer.h" header file
-                                // there was something I had to do with the class to use get_angle, but I don't remember what
+    float azimuth = magnetometer->get_angle();
 
     float theta = (azimuth)*(PI/180); // getting the angle between the normal line to the vector of the vehicle direction and the horizontal axis
 
@@ -39,4 +39,8 @@ void check_direction(void){
             direction_f=0;
         }
     }
+}
+
+void check_angle(void){
+    
 }
