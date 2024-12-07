@@ -3,7 +3,8 @@
 #define _DIRECTION_H_
 
 extern bool direction_f;
-void check_direction(); // Note: Function definitions are extern on default.
+extern int8_t dir_angle;
+void check_direction(void); // Note: Function definitions are extern on default.
 void check_angle(void);
 
 #endif
