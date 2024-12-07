@@ -10,6 +10,7 @@
 extern Magnetometer* magnetometer;
 
 bool phase_one_f = 0; // 0 for we are not done with phase one, 1 for we are done with phase one
+// bool direction_f; // using function return value simply
 
 void phase_one(void);
 void phase_two(void);
@@ -29,12 +30,14 @@ void setup() {
 }
 
 void loop() {
+  Serial.println(check_direction());
+  Serial.println(direction_f);
+  phase_one();
+  if (phase_one_f == 1){
+    phase_two();
+  }
 
- phase_one();
- if (phase_one_f == 1){
-  phase_two();
- }
-
+  delay(1000);
 }
 
 void phase_one(void){
