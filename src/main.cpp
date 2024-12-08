@@ -30,8 +30,8 @@ void setup() {
 }
 
 void loop() {
-  Serial.println(check_direction());
-  Serial.println(direction_f);
+  bool direc = check_direction();
+  Serial.println(direc);
   phase_one();
   if (phase_one_f == 1){
     phase_two();
