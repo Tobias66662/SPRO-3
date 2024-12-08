@@ -4,10 +4,12 @@
 #include "direction.h"
 #include "gps.h"
 #include <Adafruit_GPS.h>
+#include "navigation.h"
 
 #include <SoftwareSerial.h>
 
 extern Magnetometer* magnetometer;
+Navigation nav;
 
 bool phase_one_f = 0; // 0 for we are not done with phase one, 1 for we are done with phase one
 // bool direction_f; // using function return value simply
@@ -27,11 +29,10 @@ void read_angle() {
 void setup() {
   Serial.begin(9600);
   magnetometer = new Magnetometer();
+  nav = Navigation(magnetometer);
 }
 
 void loop() {
-  Serial.println(check_direction());
-  Serial.println(direction_f);
   phase_one();
   if (phase_one_f == 1){
     phase_two();

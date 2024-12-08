@@ -1,18 +1,7 @@
-#ifndef _MAGNETOMETER_H_
-
-#define _MAGNETOMETER_H_
+#if !defined(_MAGNETOMETER_H)
+#define _MAGNETOMETER_H
 
 #include "i2cmaster.h"
-
-#define I2C_ADDRESS 0x30
-#define CTRLR0 0x07 // address 0x07 corresponds to Control Register 0 
-#define STR0 0x06 // address 0x06 corresponds to Status Register 0 
-#define SLA_W (0x30<<1) // device ID 0x30 with a write (0) bit
-#define SLA_R (0x30<<1) | I2C_READ // device ID 0x30 with a read (1) bit
-
-#define SIZE 3 // three coordinates
-#define CONVERSION 0.48828125
-#define DECLINATION 5.11f // magnetic declination in DK
 
 class Magnetometer {
     public:
@@ -31,4 +20,4 @@ class Magnetometer {
     float result[3];
 };
 
-#endif
+#endif // _MAGNETOMETER_H
