@@ -1,5 +1,3 @@
-// #ifndef ULTRASONIC_H_INCLUDED // checks whether NEXTION_H_INCLUDED is not declared.
-// #define ULTRASONIC_H_INCLUDED // Will declare NEXTION_H_INCLUDED once #ifndef generates true.
 #ifndef _ULTRASONIC_H_ // checks whether NEXTION_H_INCLUDED is not declared.
 #define _ULTRASONIC_H_ // Will declare NEXTION_H_INCLUDED once #ifndef generates true.
 
