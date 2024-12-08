@@ -8,8 +8,7 @@
 #include "gps.h"
 #include "direction.h"
 
-bool direction_f = 0; // flag returning which direction the vehicle should turn to face a point of interest (1 represents left and 0 represents right)
-int8_t dir_angle = 0; // variable returning the angle between the vector pointing  to the target point and the vector facing the same direction as the vehicle (passed to PD control)
+int8_t angle_diff = 0; // variable returning the angle between the vector pointing  to the target point and the vector facing the same direction as the vehicle (passed to PD control)
 extern bool direction_f; // flag returning which direction the vehicle should turn to face a point of interest (1 represents left and 0 represents right)
 
 Magnetometer* magnetometer;
@@ -44,27 +43,22 @@ bool check_direction(void){
 }
 
 void check_angle(void){
-    float m1, m2; // m1 represents the slope of the vehicle direction vector and m2 represents the vector pointing towards the target point from the vehicle's position
+    float m1_angle_deg = magnetometer->get_angle(); // m1 angle is given by the azimuth (0-360, where North is 0)
 
-    float azimuth = magnetometer->get_angle();
-
-    float theta = (azimuth)*(PI/180);
-
-    float m1_angle = PI-theta;
-
-    m1 = atan(m1_angle);
+    float m2; // m1 represents the slope of the vehicle direction vector and m2 represents the vector pointing towards the target point from the vehicle's position
 
     m2 = (target_point_lat-lat_gps)/(target_point_long-long_gps);
 
-    float calc1 = (m1-m2)/(1+m1*m2);
-    if (calc1 < 0){ // taking the absolute value for the calculation of the acute angle
-        calc1=calc1*(-1);
-    }
-    float acute_angle= atan(calc1); // acute angle between the two intersecting straight lines (in radians)
-    dir_angle = acute_angle*(180/PI); // converting acute angle to degrees
+    // m2 angle:
+    float m2_angle_deg = 90+atan(m2)*(180/PI); // given in degrees (0-180, where 0 is North)
+    if (target_point_long > long_gps){
+        m2_angle_deg = m2_angle_deg + 180;
+    } // Now m2_angle is given in degrees (0-360), which also gives info on which side of the compass the target point is located
 
-    if ((m1<1) && (m2<1) && (azimuth < 90)){
-        // do nothing, we got the correct angle
+    int angle_diff = m2_angle_deg-m1_angle_deg;
+    if (angle_diff<0){ // taking absolute value if negative
+      angle_diff=angle_diff*(-1);
     }
-    else if ((m1<1) && (m2<1) && (azimuth > 90))
+
 }
+// when done convert variables that are in just degrees into uint8 to save memory (we don't need decimal degrees)
