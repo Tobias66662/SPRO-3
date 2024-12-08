@@ -31,6 +31,8 @@ void Magnetometer::magnetometer_init() {
 
     success &= write_register(CTRLR0, 0x40); delay(10); // starts the SET action
     success &= write_register(0x08, 0x00); delay(10); // starts the SET action
+
+    if (!success) Serial.println("Failed to calibrate the magnetometer");
 }
 
 bool Magnetometer::write_register(unsigned char address, unsigned char data = 0) {

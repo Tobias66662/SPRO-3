@@ -65,8 +65,8 @@ float array1_lat[60]; // latitude and longitude coordinate for the points on the
 float array1_long[60];// ^^
 float array2_lat[60]; // latitude and longitude coordinate for the points on the bottom line
 float array2_long[60];// ^^
-float target_point_lat=0;
-float target_point_long=0;
+float target_point_lat=0; // target point latitude  (will be calculated in main)
+float target_point_long=0;// target point longitude (same ^^)
 
 // Array sizes (dependent on ARRAY_RESOLUTION)
 int n1 = 0; // Array size for top line
