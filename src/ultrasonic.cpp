@@ -75,7 +75,7 @@ uint16_t getDistance(uint8_t sensor)
 
 void TriggerSensor(uint8_t sensor)
 {
-  MUXState(sensor);
+  // MUXState(sensor);
   
   // Send the trigger pusle 
   DDRB |= (1 << Echo_Trig); // Output
@@ -84,7 +84,7 @@ void TriggerSensor(uint8_t sensor)
   PORTB |= (1 << Echo_Trig); 
   _delay_us(10); // 10 microsecond delay to send out a 8 cycle ultrasonic burst
   PORTB &= ~(1 << Echo_Trig); 
-  // _delay_us(2);
+  _delay_us(20);
   DDRB &= ~(1 << Echo_Trig); // input
 
   // PORTB &= ~(1 << Trig); // makes sure the trigger pin is low
@@ -122,6 +122,8 @@ void ultrasonicInit()
   TIMSK1 |= (1 << ICIE1); // Inable input capture interrupt
   TCCR1B |= (1 << CS11); // Start timer with prescaler of 8
   sei();
+
+  // PORTB |= (1 << A_control) | (1 << B_control) | (1 << C_control);
 }
 
 void MUXState(uint8_t sensor)
