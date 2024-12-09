@@ -75,7 +75,7 @@ void Navigation::align_device(bool is_north, bool is_clockwise, float target) {
 
 /** 
  * @param peak is optional to give maximum power a motor should have when the other is off (ratio 100 : 0)
- * @param peak is 250 by default 
+ * @param peak is 255 by default 
  * proportional mode for straight vs linear for turn?
  */
 void Navigation::motor_control(bool is_straight, unsigned char peak) {

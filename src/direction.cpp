@@ -13,7 +13,7 @@ extern bool direction_f; // flag returning which direction the vehicle should tu
 
 Magnetometer* magnetometer;
 
-bool check_direction(void){
+void check_direction(void){
     float azimuth = magnetometer->get_angle();
     Serial.println(azimuth);
 
@@ -38,8 +38,6 @@ bool check_direction(void){
             direction_f=0;
         }
     }
-
-    return direction_f;
 }
 
 void check_angle(void){
