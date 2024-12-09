@@ -28,6 +28,10 @@
 extern Magnetometer* magnetometer;
 Navigation nav;
 
+int8_t obstacle_array[100]; // Obstacle array storing the starting and ending i1/i2 values where the obstacle was detected for both the top and bottom line
+// For example, i values are stored as obstacle[0]= (i1 start value), obstacle[1]= (i1 end value), obstacle[2]= (i2 start value), obstacle[3]= (i2 end value): all of this is for the first object. From obstacle[4] to obstacle[7], it will be info for the second object and so on...
+// Allows storing areas for up to 25 object blocks
+
 // bool direction_f; // using function return value simply
 
 void phase_one(void);
@@ -106,11 +110,20 @@ void phase_one(void){
       flip_flag = 0;
     }
 
+    store_coordinates();
     boundary_check();
-    check_angle();
-    check_direction();
+    // check_angle(); 
+    // check_direction();
 
     // insert code here that makes the vehicle move to target point (PID) + check if there is an obstacle + check if there is a fix + check if we have reached the target point
+    // int8_t i = 0;
+    // if ({obstacle detected = True}){
+    // obstacle_array[i]
+    //
+    //
+    //
+    // i++;
+    //}
   }
 
 
@@ -118,4 +131,4 @@ void phase_one(void){
 
 void phase_two(void){
 
-}
+} // end of phase_two()
