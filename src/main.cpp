@@ -4,6 +4,7 @@
 #include "direction.h"
 #include "gps.h"
 #include <Adafruit_GPS.h>
+#include "navigation.h"
 
 #include <SoftwareSerial.h>
 
@@ -25,6 +26,7 @@
 #define ARRAY_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
 
 extern Magnetometer* magnetometer;
+Navigation nav;
 
 // bool direction_f; // using function return value simply
 
@@ -43,11 +45,10 @@ void read_angle() {
 void setup() {
   Serial.begin(9600);
   magnetometer = new Magnetometer();
+  nav = Navigation(magnetometer);
 }
 
 void loop() {
-  bool direc = check_direction();
-  Serial.println(direc);
   phase_one();
   phase_two();
 
