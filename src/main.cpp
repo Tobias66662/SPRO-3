@@ -60,7 +60,6 @@ void phase_one(void){
   check_angle();
   check_direction();
 
-  bool phase_one_f=0;
   int i1 = n1;
   int i2 = n2;
   // WE KEEP THIS VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
@@ -99,18 +98,23 @@ void phase_one(void){
         i2--;
       }
     }
-    if (flip_flag == 0){
+
+    if (flip_flag == 0){ // flipping the flip_flag so we take turns between target points on the bottom line and target points on the top line
       flip_flag = 1;
     }
     else{
       flip_flag = 0;
     }
 
-    // insert code here that makes the vehicle move to target point
+    boundary_check();
+    check_angle();
+    check_direction();
+
+    // insert code here that makes the vehicle move to target point (PID) + check if there is an obstacle + check if there is a fix + check if we have reached the target point
   }
 
 
-}
+} // end of phase_one()
 
 void phase_two(void){
 
