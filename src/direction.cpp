@@ -41,22 +41,21 @@ void check_direction(void){
 }
 
 void check_angle(void){
-    float m1_angle_deg = magnetometer->get_angle(); // m1 angle is given by the azimuth (0-360, where North is 0)
+    uint8_t m1_angle_deg = magnetometer->get_angle(); // m1 angle is given by the azimuth (0-360, where North is 0)
 
     float m2; // m1 represents the slope of the vehicle direction vector and m2 represents the vector pointing towards the target point from the vehicle's position
 
     m2 = (target_point_lat-lat_gps)/(target_point_long-long_gps);
 
     // m2 angle:
-    float m2_angle_deg = 90+atan(m2)*(180/PI); // given in degrees (0-180, where 0 is North)
+    uint8_t m2_angle_deg = 90+atan(m2)*(180/PI); // given in degrees (0-180, where 0 is North)
     if (target_point_long > long_gps){
         m2_angle_deg = m2_angle_deg + 180;
     } // Now m2_angle is given in degrees (0-360), which also gives info on which side of the compass the target point is located
 
-    int angle_diff = m2_angle_deg-m1_angle_deg;
+    angle_diff = m2_angle_deg-m1_angle_deg;
     if (angle_diff<0){ // taking absolute value if negative
       angle_diff=angle_diff*(-1);
     }
 
 }
-// when done convert variables that are in just degrees into uint8 to save memory (we don't need decimal degrees)

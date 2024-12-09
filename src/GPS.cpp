@@ -25,6 +25,8 @@ Adafruit_GPS GPS(&mySerial); // GPS object created using the Adafruit_GPS class
 // Set to 'true' if you want to debug and listen to the raw GPS sentences
 #define GPSECHO  true
 
+#ifndef BOUNDARY_CONSTANTS
+#define BOUNDARY_CONSTANTS
 // The four points defining our boundary (in decimal degrees): 
 // Point 1 (top left)
 #define LAT1 54.901667001056424
@@ -40,6 +42,7 @@ Adafruit_GPS GPS(&mySerial); // GPS object created using the Adafruit_GPS class
 #define LONG4 9.808851905646074
 
 #define ARRAY_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
+#endif
 //====================
 // Global Variables
 //====================
@@ -60,11 +63,6 @@ bool leftline_f = 0;
 float m1, m2, m3, m4; // gradient
 float c1, c2, c3, c4; // intercept
 
-// Point arrays used to store a number of points on two opposite lines for the BF path navigation (may cause RAM overflow issues, optimize later if possible)
-float array1_lat[60]; // latitude and longitude coordinate for the points on the top line
-float array1_long[60];// ^^
-float array2_lat[60]; // latitude and longitude coordinate for the points on the bottom line
-float array2_long[60];// ^^
 float target_point_lat=0; // target point latitude  (will be calculated in main)
 float target_point_long=0;// target point longitude (same ^^)
 
@@ -84,7 +82,6 @@ uint32_t timer = millis(); // will be removed once code is integrated
 void boundary_check(void);
 void store_coordinates(void);
 void gradient_and_intercept_calc(void);
-void create_arrays(void);
 void GPS_setup(void);
 
 //====================
@@ -127,18 +124,14 @@ void store_coordinates(void){
     timer = millis(); // reset the timer
 
     if (GPS.fix){ // GPS.fix returns the fix status, where 0 means no fix and 1 means there is a fix.
-      Serial.println("Latitude:"); //debugging
       lat_gps = GPS.latitude_fixed/1.0E7;
-      Serial.println(lat_gps, 10); //debugging
       // Serial.print(GPS.lat); // returns N/S for North/South (uncomment if needed)
-      Serial.println("Longitude:"); //debugging
       long_gps = GPS.longitude_fixed/1.0E7;
-      Serial.println(long_gps, 10); //debugging
       // Serial.println(GPS.lon); // returns E/W for East/West (uncomment if needed)
       standby_flag = 0;
     }
     else{
-      Serial.println("Satellites not detected! \nLocation data cannot be retreived!");
+      // Satellites not detected! Location data cannot be retreived!
       standby_flag = 1;
     }
   }
@@ -152,8 +145,6 @@ void boundary_check(void){ // check if the vehicle is out of bounds
     GPS_setup(); // GPS intialiser
 
     gradient_and_intercept_calc(); // getting our gradient and intercept for our straight line equations
-
-    create_arrays();// creating 4 arrays of points for the BF path navigation, two for the top line and two for the bottom, where one will contain the latitude and the other will contain the longitude coordinates of each point
 
     do_once_flag=1;
   }
@@ -237,46 +228,6 @@ void gradient_and_intercept_calc(){ // Used in boundary_check()
     c3= LAT3-m3*LONG3; // intercept of our bottom line
     c4= LAT4-m4*LONG4; // intercept of our left line
 }
-
-void create_arrays(void){ // Used in boundary_check()
-
-  float long_diff, lat_diff, lat_diff_radians; // temporary variables used for calculating the difference in longitude and latitude, which are then converted in meters
-  float lat_meters, long_meters; // temporary variables used for calculating the difference in long and lat in meters, which will be used in calculating the number of points for the top and bottom line
-
-  lat_diff=LAT2-LAT1; // Difference in lat (in degrees)
-  lat_diff_radians=(lat_diff*PI)/180; // Difference in lat, but in radians, because the cos() function only takes radians
-  long_diff=LONG2-LONG1; // Difference in long (in degrees)
-  lat_meters=lat_diff*111000; // Difference in lat (in meters)
-  long_meters=((40075*cos(lat_diff_radians)*1000)/360)*long_diff; // Difference in long (in meters)
-
-  n1=sqrt(lat_meters*lat_meters+long_meters*long_meters)/ARRAY_RESOLUTION; // number of array points for top line (Note: calculation returns a floating point number, but since n1 and n2 are an int, they will be rounded)
-
-  // Now creating the points for the top line and storing their longitude and latitude in their respective arrays
-
-  for(int i=0;i<=n1;i++){// for top line point array
-    array1_lat[i]= (LAT1+(lat_diff/n1)*i);
-    array1_long[i]= (LONG1+(long_diff/n1)*i);
-  }
-
-  lat_diff=LAT3-LAT4; // Difference in lat (in degrees)
-  lat_diff_radians=(lat_diff*PI)/180; // Difference in lat (in rads)
-  long_diff=LONG3-LONG4; // Difference in long (in degrees)
-  lat_meters=lat_diff*111000; // Difference in lat (in meters)
-  long_meters=((40075*cos(lat_diff_radians)*1000)/360)*long_diff; // Difference in long (in meters)
-
-  n2=sqrt(lat_meters*lat_meters+long_meters*long_meters)/ARRAY_RESOLUTION; // number of array points for bottom line // number of array points for the bottom line
-
-  // Now creating the points for the bottom line and storing their longitude and latitude in their respective arrays
-
-  for(int i=0;i<=n2;i++){// for bottom line point array
-    array2_lat[i]= (LAT4+(lat_diff/n2)*i);
-    array2_long[i]= (LONG4+(long_diff/n2)*i);
-  }
-}
-
-// TO-DO LIST: 
-// 1.Remove arrays and move the calculation of the points along the top and bottom line to the main navigation sequence code. This will massively optimise the program.
-// Also keep the function and only calculate the arrays size n1 and n2, which will be used for the calculation of points.
 
 // Notes: when referring to 'top' line and 'bottom' line, these are the top(North) and bottom(South) boundaries of the area of operation (AO).
 
