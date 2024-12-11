@@ -56,19 +56,27 @@ void setup()
   n2 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / PATH_RESOLUTION; // number of array points for bottom line // number of array points for the bottom line
 }
 
-void test_motor()
+void test_straight()
 {
   float angle = magnetometer->get_angle();
   nav.motor_control(true, 100);
   return;
 }
 
-void test2()
+bool test_turn()
 {
+  float angle = magnetometer->get_angle();
+  for (size_t i = 0; i < 6; i++)
+  {
+    nav.turn(60);
+  }
+  return angle == magnetometer->get_angle();
 }
+
 void loop()
 {
-  // for testing the motor
+  test_straight();
+  test_turn();
 
   phase_one();
   phase_two();
