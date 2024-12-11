@@ -2,13 +2,27 @@
 #include <Arduino.h>
 #include "gps.h"
 #include "motor.h"
+#include "ultrasonic.h"
 
 #define CTRL_SIG_LIMIT 100
+
+// declared in main
+bool flip_flag = 0;
+int8_t obstacle_array[100];
+
+bool obstacle_triggered = 0;
+bool obstacle_flag = 0;
+bool bottom_area_blocked_f = 0; // will tell if the top or bottom area is left uncleaned
 
 Navigation::Navigation() {} // not used but necessary for compiler
 Navigation::Navigation(Magnetometer *magnetometer)
 {
     this->magnetometer = magnetometer;
+}
+
+void Navigation::set_object_avoidance(bool object_avoidance_mode)
+{
+    this->object_avoidance_mode = object_avoidance_mode;
 }
 
 // state of the vehicle so it knows which direction it should initiate turning when section is over
@@ -76,7 +90,7 @@ float Navigation::get_offseted_angle() const
 void Navigation::turn(float angle)
 {
     store_offset(angle);
-    motor_control(false);
+    motor_control(0, 0, 0, false);
 }
 
 /**
@@ -97,13 +111,57 @@ bool is_border_hit()
     return topline_f || bottomline_f;
 }
 
+void check_obstacles(int8_t *i, int i1, int i2)
+{
+    obstacle_triggered = true;
+    if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (obstacle_flag == 0))
+    {
+        obstacle_flag = 1;
+        if (flip_flag == 0)
+        {
+            obstacle_array[*i] = i1;
+            obstacle_array[(*i)++] = i2;
+            bottom_area_blocked_f = 1; // object prevents cleaning the area underneath it
+        }
+        else
+        {
+            obstacle_array[*i] = i2;
+            obstacle_array[(*i)++] = i1;
+            bottom_area_blocked_f = 0; // object prevents cleaning the area above it
+        }
+
+        i += 2;
+    }
+    else if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (bottom_area_blocked_f == 1) && (obstacle_flag == 1))
+    { // check when obstacle is no longer in the way and save those points
+        if (bottomline_f == 0)
+        { // here we know the vehicle is no longer being blocked by an object
+            obstacle_array[*i] = i1;
+            obstacle_array[(*i)++] = i2;
+            obstacle_flag = 0;
+            i += 2;
+        }
+    }
+    else if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (bottom_area_blocked_f == 0) && (obstacle_flag == 1))
+    {
+        if (topline_f == 0)
+        { // here we know the vehicle is no longer being blocked by an object
+            obstacle_array[*i] = i2;
+            obstacle_array[(*i)++] = i1;
+            obstacle_flag = 0;
+            i += 2;
+        }
+    }
+}
+
+// totally disgusting sin against humanity
 /**
  * @param is_straight gives if it compensates straight line
  * @param peak is optional to give maximum power a motor should have when the other is off (ratio 100 : 0)
  * @param peak is 255 by default
  * proportional mode for straight vs linear for turn?
  */
-void Navigation::motor_control(bool is_straight, unsigned char peak)
+void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsigned char peak)
 {
     if (peak < 1 || peak > 255)
         peak = 255;
@@ -182,9 +240,24 @@ void Navigation::motor_control(bool is_straight, unsigned char peak)
 
         // store previous error
         eprev = e;
-        delay(500);
-    } while ((is_straight && !is_border_hit()) || eprev > 0);
 
+        if (is_straight)
+        {
+            if (object_avoidance_mode)
+            {
+                avoid_obsticales();
+            }
+            else
+            {
+                check_obstacles(i, i1, i2);
+            }
+        }
+
+        // delay(100);
+    } while (!obstacle_triggered &&
+             ((is_straight && !is_border_hit()) || (!is_straight && eprev > 0)));
+
+    obstacle_triggered = false;
     // reset them if turning mode was used
     left_motor.set_direction(1);
     left_motor.set_direction(1);
@@ -219,3 +292,10 @@ void Navigation::motor_control(bool is_straight, unsigned char peak)
 //     // Serial.print("Opt. result: "); Serial.println(result);
 //     return result;
 // }
+
+void avoid_obsticales()
+{
+    while (!checkFrontSensors(5))
+    {
+    }
+}
