@@ -24,7 +24,9 @@
 #define LAT4 54.90159826807496
 #define LONG4 9.808851905646074
 
-#define ARRAY_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
+#define PATH_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
+
+#define DEFAULT_OBJECT_DISTANCE 20 //(IN CENTIMETERS) Set the default distance from which the robot will detect an object in front of it.
 
 extern Magnetometer *magnetometer;
 Navigation nav;
@@ -73,7 +75,7 @@ void setup()
 void loop()
 {
   phase_one();
-  // phase_two();
+  phase_two();
 
   delay(1000);
 }
@@ -96,7 +98,7 @@ void phase_one(void)
   lat_meters = lat_diff1 * 111000;                                           // Difference in lat (in meters)
   long_meters = ((40075 * cos(lat_diff_radians) * 1000) / 360) * long_diff1; // Difference in long (in meters)
 
-  n1 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / ARRAY_RESOLUTION; // number of array points for top line (Note: calculation returns a floating point number, but since n1 and n2 are an int, they will be rounded)
+  n1 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / PATH_RESOLUTION; // number of array points for top line (Note: calculation returns a floating point number, but since n1 and n2 are an int, they will be rounded)
 
   lat_diff2 = LAT3 - LAT4;                                                   // Difference in lat (in degrees)
   lat_diff_radians = (lat_diff2 * PI) / 180;                                 // Difference in lat (in rads)
@@ -104,7 +106,7 @@ void phase_one(void)
   lat_meters = lat_diff2 * 111000;                                           // Difference in lat (in meters)
   long_meters = ((40075 * cos(lat_diff_radians) * 1000) / 360) * long_diff2; // Difference in long (in meters)
 
-  n2 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / ARRAY_RESOLUTION; // number of array points for bottom line // number of array points for the bottom line
+  n2 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / PATH_RESOLUTION; // number of array points for bottom line // number of array points for the bottom line
   // WE KEEP THIS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   bool flip_flag = 0;
   bool obstacle_flag = 0;
@@ -143,8 +145,10 @@ void phase_one(void)
     store_coordinates();
     boundary_check();
 
-    if ((obstacle_flag == 0))
-    { // change "{obstacle detected == True} &&" to the actual check !!
+    // insert code here that makes the vehicle move to target point (PID) + check if there is an obstacle + check if there is a fix + check if we have reached the target point
+
+    if ((checkFrontSensors(DEFAULT_OBJECT_DISTANCE) == true) && (obstacle_flag == 0))
+    { // change "{obstacle detected == True}" to the actual check !!
       obstacle_flag = 1;
       if (flip_flag == 0)
       {
@@ -161,8 +165,8 @@ void phase_one(void)
 
       i += 2;
     }
-    if ((bottom_area_blocked_f == 1) && (obstacle_flag == 1))
-    { // {obstacle detected == False} && check when obstacle is no longer in the way and save those points
+    if ((checkFrontSensors(DEFAULT_OBJECT_DISTANCE) == true) && (bottom_area_blocked_f == 1) && (obstacle_flag == 1))
+    { // check when obstacle is no longer in the way and save those points
       if (bottomline_f == 0)
       { // here we know the vehicle is no longer being blocked by an object
         obstacle_array[i] = i1;
@@ -171,8 +175,8 @@ void phase_one(void)
         i += 2;
       }
     }
-    else if ((bottom_area_blocked_f == 0) && (obstacle_flag == 1))
-    { // {obstacle detected == False} &&
+    else if ((checkFrontSensors(DEFAULT_OBJECT_DISTANCE) == true) && (bottom_area_blocked_f == 0) && (obstacle_flag == 1))
+    {
       if (topline_f == 0)
       { // here we know the vehicle is no longer being blocked by an object
         obstacle_array[i] = i2;
@@ -185,6 +189,7 @@ void phase_one(void)
     nav.motor_control(true);
     nav.turn(angle_diff);
   }
+
 } // end of phase_one()
 
 void phase_two(void)
