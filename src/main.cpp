@@ -10,7 +10,7 @@
 
 #define PATH_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
 
-extern bool flip_flag = 0;
+// globals
 extern Magnetometer *magnetometer;
 
 Navigation nav;
@@ -25,7 +25,7 @@ void phase_one(void);
 void phase_two(void);
 void get_next_point(int *i1, int *i2);
 void check_obstacles(int8_t *i, int i1, int i2);
-void approach_area(int *i1);
+void approach_area();
 
 void setup()
 {
@@ -35,6 +35,7 @@ void setup()
   magnetometer = new Magnetometer();
   nav = Navigation(magnetometer);
 
+  flip_flag = 0;
   float lat_meters, long_meters, lat_diff_radians; // temporary variables used for calculating the difference in long and lat in meters, which will be used in calculating the number of points for the top and bottom line
 
   lat_diff1 = LAT2 - LAT1;                                                   // Difference in lat (in degrees)
@@ -56,7 +57,6 @@ void setup()
 
 void test_straight()
 {
-  float angle = magnetometer->get_angle();
   nav.motor_control(0, 0, 0, true, 100);
   return;
 }
@@ -88,19 +88,20 @@ void phase_one(void)
   check_angle();
   check_direction();
 
-  int i1 = n1 + 1;
-  int i2 = n2;
+  int i1, i2;
+  // intialize(&i1, i2);
 
   int8_t i = 0;
-
+  bool first = true;
   while ((i1 > 0) && (i2 > 0))
   {
     store_coordinates();
 
     // getting the next point if it's not in initialize otherwise call find_closest
-    if (n2 == i2 && n1 + 1 == i1)
+    if (first)
     {
-      approach_area(&i1);
+      approach_area();
+      first = false;
     }
     else
       get_next_point(&i1, &i2);
@@ -130,8 +131,9 @@ void phase_two(void)
 
 } // end of phase_two()
 
-void approach_area(int *i)
+void approach_area()
 {
+  nav.set_object_avoidance(true);
   switch (find_closest())
   {
   case 1:
@@ -151,12 +153,11 @@ void approach_area(int *i)
     target_point_long = LONG4;
     break;
   }
-
-  (*i)--;
 }
 
 void get_next_point(int *i1, int *i2)
 {
+  nav.set_object_avoidance(false);
   if ((flip_flag == 0) && (i1 > 0))
   { // target point on top line
     target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
@@ -173,48 +174,6 @@ void get_next_point(int *i1, int *i2)
     if (*i2 > 0)
     {
       (*i2)--;
-    }
-  }
-}
-
-void check_obstacles(int8_t *i, int i1, int i2)
-{
-  if ((checkFrontSensors(DEFAULT_OBJECT_DISTANCE) == true) && (obstacle_flag == 0))
-  {
-    obstacle_flag = 1;
-    if (flip_flag == 0)
-    {
-      obstacle_array[*i] = i1;
-      obstacle_array[(*i)++] = i2;
-      bottom_area_blocked_f = 1; // object prevents cleaning the area underneath it
-    }
-    else
-    {
-      obstacle_array[*i] = i2;
-      obstacle_array[(*i)++] = i1;
-      bottom_area_blocked_f = 0; // object prevents cleaning the area above it
-    }
-
-    i += 2;
-  }
-  if ((checkFrontSensors(DEFAULT_OBJECT_DISTANCE) == true) && (bottom_area_blocked_f == 1) && (obstacle_flag == 1))
-  { // check when obstacle is no longer in the way and save those points
-    if (bottomline_f == 0)
-    { // here we know the vehicle is no longer being blocked by an object
-      obstacle_array[*i] = i1;
-      obstacle_array[(*i)++] = i2;
-      obstacle_flag = 0;
-      i += 2;
-    }
-  }
-  else if ((checkFrontSensors(DEFAULT_OBJECT_DISTANCE) == true) && (bottom_area_blocked_f == 0) && (obstacle_flag == 1))
-  {
-    if (topline_f == 0)
-    { // here we know the vehicle is no longer being blocked by an object
-      obstacle_array[*i] = i2;
-      obstacle_array[(*i)++] = i1;
-      obstacle_flag = 0;
-      i += 2;
     }
   }
 }

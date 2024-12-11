@@ -1,6 +1,8 @@
 #if !defined(NAVIGATION_H)
 #define NAVIGATION_H
 
+extern bool flip_flag;
+
 #include "magnetometer.h"
 
 class Navigation

@@ -7,10 +7,11 @@
 #define CTRL_SIG_LIMIT 100
 
 // declared in main
-bool flip_flag = 0;
 int8_t obstacle_array[100];
 
-bool obstacle_triggered = 0;
+// global
+bool flip_flag;
+
 bool obstacle_flag = 0;
 bool bottom_area_blocked_f = 0; // will tell if the top or bottom area is left uncleaned
 
@@ -113,7 +114,6 @@ bool is_border_hit()
 
 void check_obstacles(int8_t *i, int i1, int i2)
 {
-    obstacle_triggered = true;
     if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (obstacle_flag == 0))
     {
         obstacle_flag = 1;
@@ -151,6 +151,13 @@ void check_obstacles(int8_t *i, int i1, int i2)
             obstacle_flag = 0;
             i += 2;
         }
+    }
+}
+
+void avoid_obsticales()
+{
+    while (!checkFrontSensors(5))
+    {
     }
 }
 
@@ -250,14 +257,13 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsi
             else
             {
                 check_obstacles(i, i1, i2);
+                break;
             }
         }
 
         // delay(100);
-    } while (!obstacle_triggered &&
-             ((is_straight && !is_border_hit()) || (!is_straight && eprev > 0)));
+    } while ((is_straight && !is_border_hit()) || (!is_straight && eprev > 0));
 
-    obstacle_triggered = false;
     // reset them if turning mode was used
     left_motor.set_direction(1);
     left_motor.set_direction(1);
@@ -292,10 +298,3 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsi
 //     // Serial.print("Opt. result: "); Serial.println(result);
 //     return result;
 // }
-
-void avoid_obsticales()
-{
-    while (!checkFrontSensors(5))
-    {
-    }
-}
