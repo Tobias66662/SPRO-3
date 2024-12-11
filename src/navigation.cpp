@@ -93,10 +93,12 @@ void Navigation::align_device(bool is_north, bool is_clockwise, float target)
 
 bool is_border_hit()
 {
+    boundary_check();
     return topline_f || bottomline_f;
 }
 
 /**
+ * @param is_straight gives if it compensates straight line
  * @param peak is optional to give maximum power a motor should have when the other is off (ratio 100 : 0)
  * @param peak is 255 by default
  * proportional mode for straight vs linear for turn?

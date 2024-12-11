@@ -12,13 +12,6 @@ Motor right_motor(2); // Right track motor
 Motor brush_motor(3); // Brush motor
 Motor servo_motor(4); // Servo motor
 
-void motor_init();
-
-void motor_init()
-{
-  Motor::initialize(); // Initialize Timer0 and Timer2 for PWM
-}
-
 // Initialize Timer0 and Timer2 for PWM
 void Motor::initialize()
 {

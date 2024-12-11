@@ -3,8 +3,6 @@
 
 #include <stdint.h> // For uint8_t type
 
-void motor_init(); // do we need this?
-
 class Motor
 {
 public:

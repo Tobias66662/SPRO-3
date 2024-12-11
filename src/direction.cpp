@@ -13,7 +13,7 @@ bool direction_f;      // flag returning which direction the vehicle should turn
 
 Magnetometer *magnetometer;
 
-void check_direction(void)
+bool check_direction(void)
 {
     float azimuth = magnetometer->get_angle();
     Serial.println(azimuth);
@@ -45,9 +45,11 @@ void check_direction(void)
             direction_f = 0;
         }
     }
+
+    return direction_f;
 }
 
-void check_angle(void)
+int8_t check_angle(void)
 {
     uint8_t m1_angle_deg = magnetometer->get_angle(); // m1 angle is given by the azimuth (0-360, where North is 0)
 
@@ -67,4 +69,6 @@ void check_angle(void)
     { // taking absolute value if negative
         angle_diff = angle_diff * (-1);
     }
+
+    return angle_diff;
 }

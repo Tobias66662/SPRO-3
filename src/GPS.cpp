@@ -25,7 +25,6 @@ Adafruit_GPS GPS(&mySerial);   // GPS object created using the Adafruit_GPS clas
 // Set to 'true' if you want to debug and listen to the raw GPS sentences
 #define GPSECHO true
 
-#ifndef BOUNDARY_CONSTANTS
 #define BOUNDARY_CONSTANTS
 // The four points defining our boundary (in decimal degrees):
 // Point 1 (top left)
@@ -42,7 +41,7 @@ Adafruit_GPS GPS(&mySerial);   // GPS object created using the Adafruit_GPS clas
 #define LONG4 9.808851905646074
 
 #define ARRAY_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
-#endif
+
 //====================
 // Global Variables
 //====================
@@ -87,6 +86,27 @@ void GPS_setup(void);
 //====================
 // Function Prototypes
 //====================
+
+uint8_t find_closest()
+{
+  store_coordinates();
+
+  uint8_t closest;
+  float distance = 9999;
+  for (size_t i = 1; i < 5; i++)
+  {
+    float dist_x = abs(long_gps - LONG1);
+    float dist_y = abs(lat_gps - LAT1);
+
+    if (distance > sqrt(dist_x * dist_x + dist_y * dist_y))
+    {
+      distance = sqrt(dist_x * dist_x + dist_y * dist_y);
+      closest = i;
+    }
+  }
+  return closest;
+}
+
 void GPS_setup(void)
 {                     // initializer
   Serial.begin(9600); // initialising the serial monitor
