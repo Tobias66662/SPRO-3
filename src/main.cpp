@@ -31,7 +31,7 @@ void setup()
 {
   Serial.begin(9600);
 
-  Motor::initialize();
+  // Motor::initialize();
   magnetometer = new Magnetometer();
   nav = Navigation(magnetometer);
 
@@ -55,10 +55,10 @@ void setup()
   n2 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / PATH_RESOLUTION; // number of array points for bottom line // number of array points for the bottom line
 }
 
-void test_straight()
+bool test_straight()
 {
   nav.motor_control(0, 0, 0, true, 100);
-  return;
+  return true;
 }
 
 bool test_turn()
@@ -71,13 +71,20 @@ bool test_turn()
   return angle == magnetometer->get_angle();
 }
 
+bool test_magneto()
+{
+  Serial.println(magnetometer->get_angle());
+  return true;
+}
+
 void loop()
 {
-  test_straight();
-  test_turn();
+  test_magneto();
+  // test_straight();
+  // test_turn();
 
-  phase_one();
-  phase_two();
+  // phase_one();
+  // phase_two();
 
   delay(1000);
 }
