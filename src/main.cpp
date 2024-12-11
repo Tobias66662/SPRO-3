@@ -25,7 +25,7 @@ void phase_one(void);
 void phase_two(void);
 void get_next_point(int *i1, int *i2);
 void check_obstacles(int8_t *i, int i1, int i2);
-void approach_area();
+void i1_i2_init(int *i1, int *i2);
 
 void setup()
 {
@@ -98,12 +98,7 @@ void phase_one(void)
     store_coordinates();
 
     // getting the next point if it's not in initialize otherwise call find_closest
-    if (first)
-    {
-      approach_area();
-      first = false;
-    }
-    else
+      i1_i2_init();
       get_next_point(&i1, &i2);
 
     if (flip_flag == 0) // flipping the flip_flag so we take turns between target points on the bottom line and target points on the top line
@@ -131,34 +126,33 @@ void phase_two(void)
 
 } // end of phase_two()
 
-void approach_area()
+
+void get_next_point(int *i1, int *i2)
 {
   nav.set_object_avoidance(true);
   switch (find_closest())
   {
   case 1:
-    target_point_lat = LAT1;
-    target_point_long = LONG1;
+  if ((flip_flag == 0) && (*i1 <= n1))
+  { // target point on top line
+    target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
+    target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+    if (*i1 <= n1)
+    {
+      (*i1)++;
+    }
+  }
+  if ((flip_flag == 1) && (*i2 <= n2))
+  { // target point on bottom line
+    target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
+    target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+    if (*i2 <= 0)
+    {
+      (*i2)++;
+    }
     break;
   case 2:
-    target_point_lat = LAT2;
-    target_point_long = LONG2;
-    break;
-  case 3:
-    target_point_lat = LAT3;
-    target_point_long = LONG3;
-    break;
-  case 4:
-    target_point_lat = LAT4;
-    target_point_long = LONG4;
-    break;
-  }
-}
-
-void get_next_point(int *i1, int *i2)
-{
-  nav.set_object_avoidance(false);
-  if ((flip_flag == 0) && (i1 > 0))
+  if ((flip_flag == 0) && (*i1 > 0))
   { // target point on top line
     target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
     target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
@@ -167,7 +161,7 @@ void get_next_point(int *i1, int *i2)
       (*i1)--;
     }
   }
-  if ((flip_flag == 1) && (i2 > 0))
+  if ((flip_flag == 1) && (*i2 > 0))
   { // target point on bottom line
     target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
     target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
@@ -175,5 +169,57 @@ void get_next_point(int *i1, int *i2)
     {
       (*i2)--;
     }
+  }
+    break;
+  case 3:
+  if ((flip_flag == 0) && (*i2 > 0))
+  { // target point on bottom line
+    target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
+    target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+    if (*i2 > 0)
+    {
+      (*i2)--;
+    }
+  }
+  if ((flip_flag == 1) && (*i1 > 0))
+  { // target point on top line
+    target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
+    target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+    if (*i1 > 0)
+    {
+      (*i1)--;
+    }
+  }
+    break;
+  case 4:
+  if ((flip_flag == 0) && (*i2 <= n2))
+  { // target point on bottom line
+    target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
+    target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+    if (*i2 <= 0)
+    {
+      (*i2)++;
+    }
+  if ((flip_flag == 1) && (*i1 <= n1))
+  { // target point on top line
+    target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
+    target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+    if (*i1 <= n1)
+    {
+      (*i1)++;
+    }
+  }
+    break;
+  }
+}
+
+void i1_i2_init(int *i1, int *i2){
+  if((find_closest()==1) || (find_closest()==4)){
+    int i1 = 0;
+    int i2 = 0;
+  }
+  else{
+    int i1 = n1;
+    int i2 = n2;
   }
 }
