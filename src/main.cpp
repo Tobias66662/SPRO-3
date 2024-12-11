@@ -29,6 +29,10 @@
 extern Magnetometer* magnetometer;
 Navigation nav;
 
+int8_t obstacle_array[100]; // Obstacle array storing the starting and ending i1/i2 values where the obstacle was detected for both the top and bottom line
+// For example, i values are stored as obstacle[0]= (i1 start value), obstacle[1]= (i2 start value), obstacle[2]= (i1 end value), obstacle[3]= (i2 end value): all of this is for the first object. From obstacle[4] to obstacle[7], it will be info for the second object and so on...
+// Allows storing areas for up to 25 object blocks.
+
 // bool direction_f; // using function return value simply
 
 void phase_one(void);
@@ -95,6 +99,9 @@ void phase_one(void){
   n2=sqrt(lat_meters*lat_meters+long_meters*long_meters)/ARRAY_RESOLUTION; // number of array points for bottom line // number of array points for the bottom line
   // WE KEEP THIS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   bool flip_flag = 0;
+  bool obstacle_flag = 0;
+  bool bottom_area_blocked_f=0; // will tell if the top or bottom area is left uncleaned
+  int8_t i = 0;
   while ((i1 > 0) && (i2 > 0)){
     if ((flip_flag == 0) && (i1 > 0)){ // target point on top line
       target_point_lat= (LAT1+(lat_diff1/n1)*i1);
@@ -118,9 +125,40 @@ void phase_one(void){
       flip_flag = 0;
     }
 
+    store_coordinates();
     boundary_check();
-    check_angle();
-    check_direction();
+   
+    if ({obstacle detected == True} && (obstacle_flag == 0)){ // change "{obstacle detected == True}" to the actual check !!
+      obstacle_flag = 1;
+      if (flip_flag == 0){
+        obstacle_array[i]=i1;
+        obstacle_array[i++]=i2;
+        bottom_area_blocked_f=1; // object prevents cleaning the area underneath it
+      }
+      else{
+        obstacle_array[i]=i2;
+        obstacle_array[i++]=i1;
+        bottom_area_blocked_f=0;  // object prevents cleaning the area above it
+      }
+
+      i+=2;
+    }
+    if ({obstacle detected == False} && (bottom_area_blocked_f == 1) && (obstacle_flag == 1)){ // check when obstacle is no longer in the way and save those points
+      if (bottomline_f == 0){// here we know the vehicle is no longer being blocked by an object
+        obstacle_array[i]=i1;
+        obstacle_array[i++]=i2;
+        obstacle_flag = 0;
+        i+=2;
+      }
+    }
+    else if ({obstacle detected == False} && (bottom_area_blocked_f == 0) && (obstacle_flag == 1)){
+      if (topline_f == 0){// here we know the vehicle is no longer being blocked by an object
+        obstacle_array[i]=i2;
+        obstacle_array[i++]=i1;
+        obstacle_flag = 0;
+        i+=2;
+      }
+    }
 
     nav.motor_control(true);
     nav.turn(angle_diff);
@@ -128,5 +166,6 @@ void phase_one(void){
 } // end of phase_one()
 
 void phase_two(void){
+  // use info from obstacle_array[] to get points
 
-}
+} // end of phase_two()
