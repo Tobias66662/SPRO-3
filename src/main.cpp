@@ -90,9 +90,6 @@ void phase_one(void)
   check_angle();
   check_direction();
 
-  int i1 = n1;
-  int i2 = n2;
-
   int8_t i = 0;
 
   while ((i1 > 0) && (i2 > 0))
@@ -190,3 +187,90 @@ void check_obstacles(int8_t *i, int i1, int i2)
     }
   }
 }
+
+//=============================================================IF we start top left
+/*  int i1 = 0;
+  int i2 = 0; */
+
+  if ((flip_flag == 0) && (*i1 <= n1))
+  { // target point on top line
+    target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
+    target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+    if (*i1 <= n1)
+    {
+      (*i1)++;
+    }
+  }
+  if ((flip_flag == 1) && (*i2 <= n2))
+  { // target point on bottom line
+    target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
+    target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+    if (*i2 <= 0)
+    {
+      (*i2)++;
+    }
+//=============================================================IF we start top right
+/*  int i1 = n1;
+  int i2 = n2; */
+
+  if ((flip_flag == 0) && (*i1 > 0))
+  { // target point on top line
+    target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
+    target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+    if (*i1 > 0)
+    {
+      (*i1)--;
+    }
+  }
+  if ((flip_flag == 1) && (*i2 > 0))
+  { // target point on bottom line
+    target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
+    target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+    if (*i2 > 0)
+    {
+      (*i2)--;
+    }
+  }
+// =============================================================IF we start bottom right
+/*  int i1 = n1;
+  int i2 = n2; */
+
+  if ((flip_flag == 0) && (*i2 > 0))
+  { // target point on bottom line
+    target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
+    target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+    if (*i2 > 0)
+    {
+      (*i2)--;
+    }
+  }
+  if ((flip_flag == 1) && (*i1 > 0))
+  { // target point on top line
+    target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
+    target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+    if (*i1 > 0)
+    {
+      (*i1)--;
+    }
+  }
+// =============================================================IF we start bottom left
+/*  int i1 = 0;
+  int i2 = 0; */
+
+  if ((flip_flag == 0) && (*i2 <= n2))
+  { // target point on bottom line
+    target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
+    target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+    if (*i2 <= 0)
+    {
+      (*i2)++;
+    }
+  if ((flip_flag == 1) && (*i1 <= n1))
+  { // target point on top line
+    target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
+    target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+    if (*i1 <= n1)
+    {
+      (*i1)++;
+    }
+  }
