@@ -22,4 +22,3 @@ void boundary_check();
 void store_coordinates();
 
 #endif
-

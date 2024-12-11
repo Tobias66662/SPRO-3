@@ -5,16 +5,21 @@
 
 #define CTRL_SIG_LIMIT 100
 
-Navigation:: Navigation() {} // not used but necessary for compiler
-Navigation:: Navigation(Magnetometer* magnetometer) {
+Navigation::Navigation() {} // not used but necessary for compiler
+Navigation::Navigation(Magnetometer *magnetometer)
+{
     this->magnetometer = magnetometer;
 }
 
 // state of the vehicle so it knows which direction it should initiate turning when section is over
-bool Navigation::heading_forward(bool turn) {
-    if (is_clockwise) {
+bool Navigation::heading_forward(bool turn)
+{
+    if (is_clockwise)
+    {
         is_clockwise = !turn;
-    } else {
+    }
+    else
+    {
         is_clockwise = turn;
     }
 
@@ -24,13 +29,19 @@ bool Navigation::heading_forward(bool turn) {
 /**
  * converts @param angle smaller than 360 into signed angle with maximal 180 absolute value
  */
-float convert(float angle) {
+float convert(float angle)
+{
     // Serial.print("Convert: "); Serial.println(angle);
-    if (abs(angle) <= 180) {
+    if (abs(angle) <= 180)
+    {
         return angle;
-    } else if (angle > 180) {
+    }
+    else if (angle > 180)
+    {
         return -1 * (360 - angle);
-    } else {
+    }
+    else
+    {
         return 360 + angle;
     }
 }
@@ -38,27 +49,32 @@ float convert(float angle) {
 /**
  * stores existing offset increased by @param offset resulting between 0 to 360
  */
-void Navigation::store_offset(float offset) {
-    if (abs(offset) > 360) 
+void Navigation::store_offset(float offset)
+{
+    if (abs(offset) > 360)
         offset = (int)floor(abs(offset)) % 360;
 
     this->offset = magnetometer->get_angle() + offset;
 
-    if (this->offset > 360) this->offset -= 360;
-    else if (this->offset < 0) this->offset += 360;
+    if (this->offset > 360)
+        this->offset -= 360;
+    else if (this->offset < 0)
+        this->offset += 360;
     // Serial.print("Offset stored: "); Serial.println(this->offset);
 }
 
 /**
  * @returns signed angle relative to the offset with maximal 180 absolute value
  */
-float Navigation::get_offseted_angle() const {
+float Navigation::get_offseted_angle() const
+{
     float res = convert(magnetometer->get_angle() - this->offset);
     // Serial.print("Offset: "); Serial.println(res);
     return res;
 }
 
-void Navigation::turn(float angle) {
+void Navigation::turn(float angle)
+{
     store_offset(angle);
     motor_control(false);
 }
@@ -67,23 +83,26 @@ void Navigation::turn(float angle) {
  * aligns to @param is_north then targets the end of the section.
  * @param target has max absolute value 180 and @param is_clockwise determines the first turn to be taken.
  */
-void Navigation::align_device(bool is_north, bool is_clockwise, float target) {
+void Navigation::align_device(bool is_north, bool is_clockwise, float target)
+{
     this->is_clockwise = is_clockwise;
     unsigned short max_misorientation = is_north == magnetometer->is_north() ? 180 : 360;
     float angle = magnetometer->get_angle();
     turn(max_misorientation - angle + target);
 }
 
-bool is_border_hit() {
+bool is_border_hit()
+{
     return topline_f || bottomline_f;
 }
 
-/** 
+/**
  * @param peak is optional to give maximum power a motor should have when the other is off (ratio 100 : 0)
- * @param peak is 255 by default 
+ * @param peak is 255 by default
  * proportional mode for straight vs linear for turn?
  */
-void Navigation::motor_control(bool is_straight, unsigned char peak) {
+void Navigation::motor_control(bool is_straight, unsigned char peak)
+{
     if (peak < 1 || peak > 255)
         peak = 255;
 
@@ -95,28 +114,30 @@ void Navigation::motor_control(bool is_straight, unsigned char peak) {
     float kd = 0.025;
     float ki = 0;
 
-    do {
+    do
+    {
         long currT = micros();
-        float deltaT = ((float) (currT - prevT))/( 1.0e6 );
+        float deltaT = ((float)(currT - prevT)) / (1.0e6);
         prevT = currT;
         // float pos = magnetometer->get_angle();
 
         // error
-        int e = get_offseted_angle(); //pos - target;
+        int e = get_offseted_angle(); // pos - target;
         bool left = e >= 0;
         e = abs(e);
 
         // derivative
-        float dedt = (e-eprev)/(deltaT);
+        float dedt = (e - eprev) / (deltaT);
 
         // integral
-        eintegral = eintegral + e*deltaT;
+        eintegral = eintegral + e * deltaT;
 
         // control signal
-        float u = kp*e + kd*dedt + ki*eintegral;
+        float u = kp * e + kd * dedt + ki * eintegral;
 
         float power = abs(u);
-        if( power > CTRL_SIG_LIMIT ){
+        if (power > CTRL_SIG_LIMIT)
+        {
             power = CTRL_SIG_LIMIT;
         }
 
@@ -124,23 +145,32 @@ void Navigation::motor_control(bool is_straight, unsigned char peak) {
 
         uint8_t powerLeft, powerRight = peak;
 
-        if (is_straight) {
-            if (left) {
-                powerRight -= peak * (power/CTRL_SIG_LIMIT); // if error 0 then decrease by zero
-            } else powerLeft -= peak * (power/CTRL_SIG_LIMIT);
-            
+        if (is_straight)
+        {
+            if (left)
+            {
+                powerRight -= peak * (power / CTRL_SIG_LIMIT); // if error 0 then decrease by zero
+            }
+            else
+                powerLeft -= peak * (power / CTRL_SIG_LIMIT);
+
             left_motor.set_speed(powerLeft);
             right_motor.set_speed(powerRight);
-        } else {
-            if (left) {
-                powerLeft = peak * (power/CTRL_SIG_LIMIT);
+        }
+        else
+        {
+            if (left)
+            {
+                powerLeft = peak * (power / CTRL_SIG_LIMIT);
 
                 left_motor.set_speed(powerLeft);
                 right_motor.set_speed(powerLeft);
                 right_motor.set_direction(0);
-            } else {
-                powerRight = peak * (power/CTRL_SIG_LIMIT);
-                
+            }
+            else
+            {
+                powerRight = peak * (power / CTRL_SIG_LIMIT);
+
                 right_motor.set_speed(powerRight);
                 left_motor.set_speed(powerRight);
                 left_motor.set_direction(0);
@@ -166,7 +196,7 @@ void Navigation::motor_control(bool is_straight, unsigned char peak) {
 //         Serial.println(" - Invalid input!");
 //         return;
 //     }
-    
+
 //     float difference = previous + atan;
 //     turn(difference, is_clockwise);
 //     is_clockwise = !is_clockwise;

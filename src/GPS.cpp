@@ -17,17 +17,17 @@
 
 // you can change the pin numbers to match your wiring:
 SoftwareSerial mySerial(8, 7); // mySerial object is created to pass two parameters: rx and tx respectively.
-Adafruit_GPS GPS(&mySerial); // GPS object created using the Adafruit_GPS class
+Adafruit_GPS GPS(&mySerial);   // GPS object created using the Adafruit_GPS class
 //====================
 // Constants
 //====================
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences
-#define GPSECHO  true
+#define GPSECHO true
 
 #ifndef BOUNDARY_CONSTANTS
 #define BOUNDARY_CONSTANTS
-// The four points defining our boundary (in decimal degrees): 
+// The four points defining our boundary (in decimal degrees):
 // Point 1 (top left)
 #define LAT1 54.901667001056424
 #define LONG1 9.808867693865457
@@ -63,8 +63,8 @@ bool leftline_f = 0;
 float m1, m2, m3, m4; // gradient
 float c1, c2, c3, c4; // intercept
 
-float target_point_lat=0; // target point latitude  (will be calculated in main)
-float target_point_long=0;// target point longitude (same ^^)
+float target_point_lat = 0;  // target point latitude  (will be calculated in main)
+float target_point_long = 0; // target point longitude (same ^^)
 
 // Array sizes (dependent on ARRAY_RESOLUTION)
 int n1 = 0; // Array size for top line
@@ -87,7 +87,8 @@ void GPS_setup(void);
 //====================
 // Function Prototypes
 //====================
-void GPS_setup(void){ // initializer
+void GPS_setup(void)
+{                     // initializer
   Serial.begin(9600); // initialising the serial monitor
 
   GPS.begin(9600);
@@ -95,7 +96,7 @@ void GPS_setup(void){ // initializer
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
 
   // Set the update rate
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate (can be change for up to 10Hz)
+  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); // 1 Hz update rate (can be change for up to 10Hz)
 
   // Request updates on antenna status, comment out to keep quiet
   GPS.sendCommand(PGCMD_ANTENNA);
@@ -105,128 +106,151 @@ void GPS_setup(void){ // initializer
   mySerial.println(PMTK_Q_RELEASE);
 }
 
-void store_coordinates(void){
+void store_coordinates(void)
+{
 
   char c = GPS.read(); // storing the characters coming through the serial bus in a 'c' char.
 
   if ((c) && (GPSECHO))
-    //Serial.write(c);
+    // Serial.write(c);
 
-  // if a sentence is received, we can check the checksum, parse it...
-  if (GPS.newNMEAreceived()) {
+    // if a sentence is received, we can check the checksum, parse it...
+    if (GPS.newNMEAreceived())
+    {
 
-    if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
-      return;  // we can fail to parse a sentence in which case we should just wait for another
-  }
+      if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
+        return;                       // we can fail to parse a sentence in which case we should just wait for another
+    }
 
   // approximately every 2 seconds or so, print out the current stats(remove timer when integrating to the project)
-  if (millis() - timer > 2000){
+  if (millis() - timer > 2000)
+  {
     timer = millis(); // reset the timer
 
-    if (GPS.fix){ // GPS.fix returns the fix status, where 0 means no fix and 1 means there is a fix.
-      lat_gps = GPS.latitude_fixed/1.0E7;
+    if (GPS.fix)
+    { // GPS.fix returns the fix status, where 0 means no fix and 1 means there is a fix.
+      lat_gps = GPS.latitude_fixed / 1.0E7;
       // Serial.print(GPS.lat); // returns N/S for North/South (uncomment if needed)
-      long_gps = GPS.longitude_fixed/1.0E7;
+      long_gps = GPS.longitude_fixed / 1.0E7;
       // Serial.println(GPS.lon); // returns E/W for East/West (uncomment if needed)
       standby_flag = 0;
     }
-    else{
+    else
+    {
       // Satellites not detected! Location data cannot be retreived!
       standby_flag = 1;
     }
   }
-
 }
 
-void boundary_check(void){ // check if the vehicle is out of bounds
+void boundary_check(void)
+{ // check if the vehicle is out of bounds
 
-  if (do_once_flag == 0){ // only executed once to create the straight line equation variables and array points
+  if (do_once_flag == 0)
+  { // only executed once to create the straight line equation variables and array points
 
     GPS_setup(); // GPS intialiser
 
     gradient_and_intercept_calc(); // getting our gradient and intercept for our straight line equations
 
-    do_once_flag=1;
+    do_once_flag = 1;
   }
 
   // TOP BOUNDARY
-  if (lat_gps>(m1*long_gps+c1)){ // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line
-    topline_f=0;
+  if (lat_gps > (m1 * long_gps + c1))
+  { // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line
+    topline_f = 0;
   }
-  else{
-    topline_f=1;
+  else
+  {
+    topline_f = 1;
   }
   // RIGHT BOUNDARY
-  if (m2>=0){ // for a positive slope of our right line the vehicle is outside if below the right line
-    if (lat_gps>(m2*long_gps+c2)){ // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line
-      rightline_f=1;
+  if (m2 >= 0)
+  { // for a positive slope of our right line the vehicle is outside if below the right line
+    if (lat_gps > (m2 * long_gps + c2))
+    { // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line
+      rightline_f = 1;
     }
-    else{
-      rightline_f=0;
+    else
+    {
+      rightline_f = 0;
     }
   }
-  else{ // for a negative slope of our right line, the vehicle is outside if above the right line
-    if (lat_gps<(m2*long_gps+c2)){ // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line
-      rightline_f=1;
+  else
+  { // for a negative slope of our right line, the vehicle is outside if above the right line
+    if (lat_gps < (m2 * long_gps + c2))
+    { // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line
+      rightline_f = 1;
     }
-    else{
-      rightline_f=0;
+    else
+    {
+      rightline_f = 0;
     }
   }
   // BOTTOM BOUNDARY
-  if (lat_gps<(m3*long_gps+c3)){// since it's our bottom line, our check is the same for any m, meaning the vehicle is outside if below the bottom line
-    bottomline_f=0;
+  if (lat_gps < (m3 * long_gps + c3))
+  { // since it's our bottom line, our check is the same for any m, meaning the vehicle is outside if below the bottom line
+    bottomline_f = 0;
   }
-  else{
-    bottomline_f=1;
+  else
+  {
+    bottomline_f = 1;
   }
   // LEFT BOUNDARY
-  if (m4<=0){ // for a positive slope of our right line the vehicle is outside if above the left line
-    if (lat_gps<(m4*long_gps+c4)){ // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line
-      leftline_f=0;
+  if (m4 <= 0)
+  { // for a positive slope of our right line the vehicle is outside if above the left line
+    if (lat_gps < (m4 * long_gps + c4))
+    { // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line
+      leftline_f = 0;
     }
-    else{
-      leftline_f=1;
+    else
+    {
+      leftline_f = 1;
     }
   }
-  else{ // for a negative slope of our right line, the vehicle is outside if below the left line
-    if (lat_gps>(m4*long_gps+c4)){ // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line
-      leftline_f=0;
+  else
+  { // for a negative slope of our right line, the vehicle is outside if below the left line
+    if (lat_gps > (m4 * long_gps + c4))
+    { // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line
+      leftline_f = 0;
     }
-    else{
-      leftline_f=1;
+    else
+    {
+      leftline_f = 1;
     }
   }
 }
 
-void gradient_and_intercept_calc(){ // Used in boundary_check()
-    // Calculating the straight line equation "y=mx+c" for each line
-    // Reminder: "m=(y2-y1)/(x2-x1)" and "c=y-mx"
+void gradient_and_intercept_calc()
+{ // Used in boundary_check()
+  // Calculating the straight line equation "y=mx+c" for each line
+  // Reminder: "m=(y2-y1)/(x2-x1)" and "c=y-mx"
 
-    float a1, a2, a3, a4; // a for calculating the gradient (numerator) x-longitude
-    float b1, b2, b3, b4; // b for calculating the gradient (denominator) y-latitude
+  float a1, a2, a3, a4; // a for calculating the gradient (numerator) x-longitude
+  float b1, b2, b3, b4; // b for calculating the gradient (denominator) y-latitude
 
-    // Calculating the difference between longitudes(x) to get the numerator for calculating the gradient
-      a1= LONG1-LONG2;
-      a2= LONG2-LONG3;
-      a3= LONG3-LONG4;
-      a4= LONG4-LONG1;
-    // Calculating the difference between latitudes(y) to get the denominator for calculating the gradient
-      b1= LAT1-LAT2;
-      b2= LAT2-LAT3;
-      b3= LAT3-LAT4;
-      b4= LAT4-LAT1;
-    // Calculating the gradient m for each line
-    m1=b1/a1; // gradient of our top line       DEBUG Check: good
-    m2=b2/a2; // gradient of our right line     DEBUG Check: good
-    m3=b3/a3; // gradient of our bottom line    DEBUG Check: good
-    m4=b4/a4; // gradient of our left line      DEBUG Check: good
+  // Calculating the difference between longitudes(x) to get the numerator for calculating the gradient
+  a1 = LONG1 - LONG2;
+  a2 = LONG2 - LONG3;
+  a3 = LONG3 - LONG4;
+  a4 = LONG4 - LONG1;
+  // Calculating the difference between latitudes(y) to get the denominator for calculating the gradient
+  b1 = LAT1 - LAT2;
+  b2 = LAT2 - LAT3;
+  b3 = LAT3 - LAT4;
+  b4 = LAT4 - LAT1;
+  // Calculating the gradient m for each line
+  m1 = b1 / a1; // gradient of our top line       DEBUG Check: good
+  m2 = b2 / a2; // gradient of our right line     DEBUG Check: good
+  m3 = b3 / a3; // gradient of our bottom line    DEBUG Check: good
+  m4 = b4 / a4; // gradient of our left line      DEBUG Check: good
 
-    // Calculating the intercept c for each line
-    c1= LAT1-m1*LONG1; // intercept of our top line // NOTE: LONG AND LAT MIGHT NEED TO BE SWAPPED
-    c2= LAT2-m2*LONG2; // intercept of our right line
-    c3= LAT3-m3*LONG3; // intercept of our bottom line
-    c4= LAT4-m4*LONG4; // intercept of our left line
+  // Calculating the intercept c for each line
+  c1 = LAT1 - m1 * LONG1; // intercept of our top line // NOTE: LONG AND LAT MIGHT NEED TO BE SWAPPED
+  c2 = LAT2 - m2 * LONG2; // intercept of our right line
+  c3 = LAT3 - m3 * LONG3; // intercept of our bottom line
+  c4 = LAT4 - m4 * LONG4; // intercept of our left line
 }
 
 // Notes: when referring to 'top' line and 'bottom' line, these are the top(North) and bottom(South) boundaries of the area of operation (AO).
@@ -235,4 +259,3 @@ void gradient_and_intercept_calc(){ // Used in boundary_check()
 // store_coordinates();
 // boundary_check(); // contains GPS_setup(), which may not work (test it)
 // All of these need to be placed in a loop and in the order mentioned.
-

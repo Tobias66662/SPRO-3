@@ -1,7 +1,7 @@
 #ifndef _ULTRASONIC_H_ // checks whether NEXTION_H_INCLUDED is not declared.
 #define _ULTRASONIC_H_ // Will declare NEXTION_H_INCLUDED once #ifndef generates true.
 
-//function headers 
+// function headers
 uint16_t calculateDistance();
 void ultrasonicInit();
 void TriggerSensor(uint8_t sensor);

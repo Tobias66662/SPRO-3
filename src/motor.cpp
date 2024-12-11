@@ -20,7 +20,7 @@ void motor_init()
 }
 
 // Initialize Timer0 and Timer2 for PWM
-void Motor::initialize() 
+void Motor::initialize()
 {
   // Timer0 //
   DDRD |= (1 << PD6); // Set PD6 (OC0A) as an output pin
@@ -46,77 +46,100 @@ void Motor::initialize()
   TCCR2A = 0x00;                         // Reset in case arduino.h fucked with something
   TCCR2B = 0x00;                         // Reset in case arduino.h fucked with something
   TCCR2A |= (1 << WGM20) | (1 << WGM21); // Fast PWM mode
-  TCCR2B |= (1 << CS22);                 // 16 bit prescaler 
-
+  TCCR2B |= (1 << CS22);                 // 16 bit prescaler
 }
 
 // Set PWM duty cycle
-void Motor::set_speed(uint8_t duty_cycle) 
+void Motor::set_speed(uint8_t duty_cycle)
 {
   switch (motor_id) // Set the output compare register
   {
-    case 1: OCR0A = duty_cycle; break; // Left track motor
-    case 2: OCR0B = duty_cycle; break; // Right track motor
-    case 3: OCR2A = duty_cycle; break; // Brush motor
-    case 4: OCR2B = duty_cycle; break; // Servo motor
+  case 1:
+    OCR0A = duty_cycle;
+    break; // Left track motor
+  case 2:
+    OCR0B = duty_cycle;
+    break; // Right track motor
+  case 3:
+    OCR2A = duty_cycle;
+    break; // Brush motor
+  case 4:
+    OCR2B = duty_cycle;
+    break; // Servo motor
   }
 }
 
 // Toggle motor state (1 == ON , 0 == OFF)
-void Motor::toggle(bool state) 
+void Motor::toggle(bool state)
 {
   motor_state = state;
-  
-  if(state)
+
+  if (state)
   {
     switch (motor_id)
     {
-    case 1: TCCR0A |= (1 << COM0A1); break;  // Enable OC0A (left motor)
-    case 2: TCCR0A |= (1 << COM0B1); break;  // Enable OC0B (right motor)
-    case 3: TCCR2A |= (1 << COM2A1); break;  // Enable OC2A (brush motor)
-    case 4: TCCR2A |= (1 << COM2B1); break;  // Enable OC2B (servo motor)
+    case 1:
+      TCCR0A |= (1 << COM0A1);
+      break; // Enable OC0A (left motor)
+    case 2:
+      TCCR0A |= (1 << COM0B1);
+      break; // Enable OC0B (right motor)
+    case 3:
+      TCCR2A |= (1 << COM2A1);
+      break; // Enable OC2A (brush motor)
+    case 4:
+      TCCR2A |= (1 << COM2B1);
+      break; // Enable OC2B (servo motor)
     }
   }
   else
   {
     switch (motor_id)
     {
-    case 1: TCCR0A &= ~(1 << COM0A1); break;  // Disable OC0A (left motor)
-    case 2: TCCR0A &= ~(1 << COM0B1); break;  // Disable OC0B (right motor)
-    case 3: TCCR2A &= ~(1 << COM2A1); break;  // Disable OC2A (brush motor)
-    case 4: TCCR2A &= ~(1 << COM2B1); break;  // Disable OC2B (servo motor)
+    case 1:
+      TCCR0A &= ~(1 << COM0A1);
+      break; // Disable OC0A (left motor)
+    case 2:
+      TCCR0A &= ~(1 << COM0B1);
+      break; // Disable OC0B (right motor)
+    case 3:
+      TCCR2A &= ~(1 << COM2A1);
+      break; // Disable OC2A (brush motor)
+    case 4:
+      TCCR2A &= ~(1 << COM2B1);
+      break; // Disable OC2B (servo motor)
     }
   }
 }
 
 // Set motor direction (1 = Forward, 0 = Reverse)
-void Motor::set_direction(uint8_t direction) 
+void Motor::set_direction(uint8_t direction)
 {
   switch (motor_id)
   {
-  case 1: // Left track motor
-    if(direction == 1)      // Forward
+  case 1:               // Left track motor
+    if (direction == 1) // Forward
     {
       PORTB |= (1 << PB5);
-      PORTC &= ~(1 << PC3); 
+      PORTC &= ~(1 << PC3);
     }
-    else if(direction == 0) // Reverse
+    else if (direction == 0) // Reverse
     {
       PORTB &= ~(1 << PB5);
       PORTC |= (1 << PC3);
     }
-    break;                   
-  case 2: // Right track motor
-    if(direction == 1)      // Forward
+    break;
+  case 2:               // Right track motor
+    if (direction == 1) // Forward
     {
       PORTC |= (1 << PC1);
-      PORTC &= ~(1 << PC2); 
+      PORTC &= ~(1 << PC2);
     }
-    else if(direction == 0) // Reverse
+    else if (direction == 0) // Reverse
     {
       PORTC &= ~(1 << PC1);
       PORTC |= (1 << PC2);
     }
-    break; 
+    break;
   }
 }
