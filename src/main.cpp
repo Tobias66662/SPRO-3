@@ -5,6 +5,7 @@
 #include "gps.h"
 #include <Adafruit_GPS.h>
 #include "navigation.h"
+#include "motor.h"
 
 #include <SoftwareSerial.h>
 
@@ -44,13 +45,24 @@ void read_angle() {
 
 void setup() {
   Serial.begin(9600);
+
+  Motor::initialize();
   magnetometer = new Magnetometer();
   nav = Navigation(magnetometer);
+
+  lat_gps = LAT4;
+  long_gps = LONG4;
+
+  target_point_lat = LAT1;
+  target_point_long = LONG1;
+  check_angle();
+
+  nav.align_device(true, true, angle_diff);
 }
 
 void loop() {
   phase_one();
-  phase_two();
+  // phase_two();
 
   delay(1000);
 }
@@ -110,10 +122,9 @@ void phase_one(void){
     check_angle();
     check_direction();
 
-    // insert code here that makes the vehicle move to target point (PID) + check if there is an obstacle + check if there is a fix + check if we have reached the target point
+    nav.motor_control(true);
+    nav.turn(angle_diff);
   }
-
-
 } // end of phase_one()
 
 void phase_two(void){

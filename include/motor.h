@@ -3,7 +3,7 @@
 
 #include <stdint.h> // For uint8_t type
 
-void motor_init();
+void motor_init(); // do we need this?
 
 class Motor {
   public:
@@ -14,7 +14,7 @@ class Motor {
   void set_direction(uint8_t direction);
 
   private:
-  uint8_t motor_id;
+  const uint8_t motor_id;
   bool motor_state; // Track motor state (on/off)
 };
 

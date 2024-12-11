@@ -1,5 +1,7 @@
 #include "navigation.h"
 #include <Arduino.h>
+#include "gps.h"
+#include "motor.h"
 
 #define CTRL_SIG_LIMIT 100
 
@@ -34,17 +36,17 @@ float convert(float angle) {
 }
 
 /**
- * stores existing offset increased by @param offset resulting between 0 to 359
+ * stores existing offset increased by @param offset resulting between 0 to 360
  */
 void Navigation::store_offset(float offset) {
-    if (offset > 359 || 0 > offset) 
+    if (abs(offset) > 360) 
         offset = (int)floor(abs(offset)) % 360;
 
     this->offset = magnetometer->get_angle() + offset;
 
-    if (this->offset > 359) this->offset -= 360;
+    if (this->offset > 360) this->offset -= 360;
     else if (this->offset < 0) this->offset += 360;
-    Serial.print("Offset stored: "); Serial.println(this->offset);
+    // Serial.print("Offset stored: "); Serial.println(this->offset);
 }
 
 /**
@@ -52,14 +54,13 @@ void Navigation::store_offset(float offset) {
  */
 float Navigation::get_offseted_angle() const {
     float res = convert(magnetometer->get_angle() - this->offset);
-    Serial.print("Offset: "); Serial.println(res);
+    // Serial.print("Offset: "); Serial.println(res);
     return res;
 }
 
 void Navigation::turn(float angle) {
     store_offset(angle);
     motor_control(false);
-    // motors off
 }
 
 /**
@@ -71,6 +72,10 @@ void Navigation::align_device(bool is_north, bool is_clockwise, float target) {
     unsigned short max_misorientation = is_north == magnetometer->is_north() ? 180 : 360;
     float angle = magnetometer->get_angle();
     turn(max_misorientation - angle + target);
+}
+
+bool is_border_hit() {
+    return topline_f || bottomline_f;
 }
 
 /** 
@@ -88,7 +93,7 @@ void Navigation::motor_control(bool is_straight, unsigned char peak) {
 
     float kp = 1;
     float kd = 0.025;
-    float ki = 0.025;
+    float ki = 0;
 
     do {
         long currT = micros();
@@ -115,30 +120,42 @@ void Navigation::motor_control(bool is_straight, unsigned char peak) {
             power = CTRL_SIG_LIMIT;
         }
 
-        Serial.print("Applied power: "); Serial.println(power);
+        // Serial.print("Applied power: "); Serial.println(power);
 
-        int powerLeft, powerRight = peak;
+        uint8_t powerLeft, powerRight = peak;
 
         if (is_straight) {
             if (left) {
                 powerRight -= peak * (power/CTRL_SIG_LIMIT); // if error 0 then decrease by zero
             } else powerLeft -= peak * (power/CTRL_SIG_LIMIT);
+            
+            left_motor.set_speed(powerLeft);
+            right_motor.set_speed(powerRight);
         } else {
             if (left) {
                 powerLeft = peak * (power/CTRL_SIG_LIMIT);
-                powerRight = -1 * powerLeft;
+
+                left_motor.set_speed(powerLeft);
+                right_motor.set_speed(powerLeft);
+                right_motor.set_direction(0);
             } else {
                 powerRight = peak * (power/CTRL_SIG_LIMIT);
-                powerLeft = -1 * powerRight;
+                
+                right_motor.set_speed(powerRight);
+                left_motor.set_speed(powerRight);
+                left_motor.set_direction(0);
             }
         }
-        
-        Serial.print(powerLeft); Serial.print(" - "); Serial.println(powerRight);
+        // Serial.print(powerLeft); Serial.print(" - "); Serial.println(powerRight);
 
         // store previous error
         eprev = e;
         delay(500);
-    } while (is_straight || eprev > 0); // TODO third condition
+    } while ((is_straight && !is_border_hit()) || eprev > 0);
+
+    // reset them if turning mode was used
+    left_motor.set_direction(1);
+    left_motor.set_direction(1);
 }
 
 // offseted angle pointing to the target
