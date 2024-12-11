@@ -176,3 +176,45 @@ void get_next_point(int *i1, int *i2)
     }
   }
 }
+
+void check_obstacles(int8_t *i, int i1, int i2)
+{
+  if ((checkFrontSensors(DEFAULT_OBJECT_DISTANCE) == true) && (obstacle_flag == 0))
+  {
+    obstacle_flag = 1;
+    if (flip_flag == 0)
+    {
+      obstacle_array[*i] = i1;
+      obstacle_array[(*i)++] = i2;
+      bottom_area_blocked_f = 1; // object prevents cleaning the area underneath it
+    }
+    else
+    {
+      obstacle_array[*i] = i2;
+      obstacle_array[(*i)++] = i1;
+      bottom_area_blocked_f = 0; // object prevents cleaning the area above it
+    }
+
+    i += 2;
+  }
+  if ((checkFrontSensors(DEFAULT_OBJECT_DISTANCE) == true) && (bottom_area_blocked_f == 1) && (obstacle_flag == 1))
+  { // check when obstacle is no longer in the way and save those points
+    if (bottomline_f == 0)
+    { // here we know the vehicle is no longer being blocked by an object
+      obstacle_array[*i] = i1;
+      obstacle_array[(*i)++] = i2;
+      obstacle_flag = 0;
+      i += 2;
+    }
+  }
+  else if ((checkFrontSensors(DEFAULT_OBJECT_DISTANCE) == true) && (bottom_area_blocked_f == 0) && (obstacle_flag == 1))
+  {
+    if (topline_f == 0)
+    { // here we know the vehicle is no longer being blocked by an object
+      obstacle_array[*i] = i2;
+      obstacle_array[(*i)++] = i1;
+      obstacle_flag = 0;
+      i += 2;
+    }
+  }
+}
