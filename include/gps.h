@@ -25,16 +25,16 @@ uint8_t find_closest();
 #define BOUNDARY_CONSTANTS
 // The four points defining our boundary (in decimal degrees):
 // Point 1 (top left)
-#define LAT1 54.91199421399982
-#define LONG1 9.780650584513328
+#define LAT1 54.912155631362886
+#define LONG1 9.779128545696924
 // Point 2 (top right)
-#define LAT2 54.912084969945255
-#define LONG2 9.780900940563537
+#define LAT2 54.912202342965166
+#define LONG2 9.779243666022944
 // Point 3 (bottom right)
-#define LAT3 54.911878824002315
-#define LONG3 9.781052056377629
+#define LAT3 54.912142007135344
+#define LONG3 9.779319848591634
 // Point 4 (bottom left)
-#define LAT4 54.91186067273662
-#define LONG4 9.780819744006713
+#define LAT4 54.912116704986275
+#define LONG4 9.779199649427701
 
 #endif
