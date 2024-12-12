@@ -60,7 +60,12 @@ void setup()
 
 bool test_straight()
 {
-  nav.store_offset();
+  static char i = 0;
+  if (i == 0)
+  {
+    nav.store_offset();
+    i++;
+  }
   nav.motor_control(0, 0, 0, true, 255);
   return true;
 }
@@ -94,7 +99,7 @@ void loop()
 {
   // test_magneto();
   // test_turn();
-  test_straight();
+  // test_straight();
 
   // phase_one();
   // phase_two();

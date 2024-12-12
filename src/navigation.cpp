@@ -83,8 +83,10 @@ void Navigation::store_offset(float offset)
  */
 float Navigation::get_offseted_angle() const
 {
-    float res = convert(magnetometer->get_angle() - this->offset);
-    Serial.print("Offset: ");
+    float angle = magnetometer->get_angle();
+    float res = convert(angle - this->offset);
+    // Serial.print(angle);
+    // Serial.print(" - Offset: ");
     Serial.println(res);
     return res;
 }
@@ -171,12 +173,6 @@ void avoid_obsticales()
  */
 void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsigned char peak)
 {
-    // reset them if turning mode was used
-    if (is_straight)
-    {
-        left_motor.set_direction(1);
-        right_motor.set_direction(1);
-    }
 
     if (peak < 1 || peak > 255)
         peak = 255;
@@ -186,7 +182,7 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsi
     int eprev = 0;
 
     float kp = 1;
-    float kd = 0.025;
+    float kd = 0;
     float ki = 0;
 
     do
@@ -217,27 +213,29 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsi
         }
 
         Serial.print("Applied power: ");
-        Serial.println(power);
+        Serial.println(u);
 
-        uint8_t powerLeft, powerRight = peak;
+        uint8_t powerLeft = peak, powerRight = peak;
 
         if (is_straight)
         {
             if (left)
             {
-                powerRight -= peak * (power / CTRL_SIG_LIMIT); // if error 0 then decrease by zero
+                powerRight -= power; // if error 0 then decrease by zero
             }
             else
-                powerLeft -= peak * (power / CTRL_SIG_LIMIT);
+                powerLeft -= power;
 
+            left_motor.set_direction(1);
             left_motor.set_speed(powerLeft);
+            right_motor.set_direction(1);
             right_motor.set_speed(powerRight);
         }
         else
         {
             if (left)
             {
-                powerLeft = peak * (power / CTRL_SIG_LIMIT);
+                powerLeft = power;
 
                 left_motor.set_speed(powerLeft);
                 left_motor.set_direction(1);
@@ -246,7 +244,7 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsi
             }
             else
             {
-                powerRight = peak * (power / CTRL_SIG_LIMIT);
+                powerRight = power;
 
                 right_motor.set_speed(powerRight);
                 right_motor.set_direction(1);
