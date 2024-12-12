@@ -28,17 +28,17 @@ Adafruit_GPS GPS(&mySerial);   // GPS object created using the Adafruit_GPS clas
 #define BOUNDARY_CONSTANTS
 // The four points defining our boundary (in decimal degrees):
 // Point 1 (top left)
-#define LAT1 54.901667001056424
-#define LONG1 9.808867693865457
+#define LAT1 54.91199421399982
+#define LONG1 9.780650584513328
 // Point 2 (top right)
-#define LAT2 54.90167543056495
-#define LONG2 9.809096623046505
+#define LAT2 54.912084969945255
+#define LONG2 9.780900940563537
 // Point 3 (bottom right)
-#define LAT3 54.901612533420376
-#define LONG3 9.809053769308182
+#define LAT3 54.911878824002315
+#define LONG3 9.781052056377629
 // Point 4 (bottom left)
-#define LAT4 54.90159826807496
-#define LONG4 9.808851905646074
+#define LAT4 54.91186067273662
+#define LONG4 9.780819744006713
 
 #define ARRAY_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
 
