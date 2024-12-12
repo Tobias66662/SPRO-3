@@ -10,7 +10,7 @@
 
 #define PATH_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
 
-// globals
+// Globals
 extern Magnetometer *magnetometer;
 
 Navigation nav;
