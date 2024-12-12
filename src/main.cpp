@@ -101,7 +101,7 @@ void loop()
   // test_turn();
   // test_straight();
 
-  // phase_one();
+  phase_one();
   // phase_two();
 
   delay(1000);
@@ -120,6 +120,8 @@ void phase_one(void)
 
   while ((i1 > 0) && (i2 > 0))
   {
+    while (standby_flag)
+      ;
     store_coordinates();
 
     // getting the next point if it's not in initialize otherwise call find_closest
