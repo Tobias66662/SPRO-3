@@ -84,7 +84,8 @@ void Navigation::store_offset(float offset)
 float Navigation::get_offseted_angle() const
 {
     float res = convert(magnetometer->get_angle() - this->offset);
-    // Serial.print("Offset: "); Serial.println(res);
+    Serial.print("Offset: ");
+    Serial.println(res);
     return res;
 }
 
@@ -170,6 +171,13 @@ void avoid_obsticales()
  */
 void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsigned char peak)
 {
+    // reset them if turning mode was used
+    if (is_straight)
+    {
+        left_motor.set_direction(1);
+        right_motor.set_direction(1);
+    }
+
     if (peak < 1 || peak > 255)
         peak = 255;
 
@@ -208,7 +216,8 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsi
             power = CTRL_SIG_LIMIT;
         }
 
-        // Serial.print("Applied power: "); Serial.println(power);
+        Serial.print("Applied power: ");
+        Serial.println(power);
 
         uint8_t powerLeft, powerRight = peak;
 
@@ -231,6 +240,7 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsi
                 powerLeft = peak * (power / CTRL_SIG_LIMIT);
 
                 left_motor.set_speed(powerLeft);
+                left_motor.set_direction(1);
                 right_motor.set_speed(powerLeft);
                 right_motor.set_direction(0);
             }
@@ -239,11 +249,14 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsi
                 powerRight = peak * (power / CTRL_SIG_LIMIT);
 
                 right_motor.set_speed(powerRight);
+                right_motor.set_direction(1);
                 left_motor.set_speed(powerRight);
                 left_motor.set_direction(0);
             }
         }
-        // Serial.print(powerLeft); Serial.print(" - "); Serial.println(powerRight);
+        Serial.print(powerLeft);
+        Serial.print(" - ");
+        Serial.println(powerRight);
 
         // store previous error
         eprev = e;
@@ -261,12 +274,8 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsi
             }
         }
 
-        // delay(100);
+        delay(100);
     } while ((is_straight && !is_border_hit()) || (!is_straight && eprev > 0));
-
-    // reset them if turning mode was used
-    left_motor.set_direction(1);
-    left_motor.set_direction(1);
 }
 
 // offseted angle pointing to the target

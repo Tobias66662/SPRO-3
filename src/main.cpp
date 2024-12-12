@@ -31,7 +31,7 @@ void setup()
 {
   Serial.begin(9600);
 
-  // Motor::initialize();
+  Motor::initialize();
   magnetometer = new Magnetometer();
   nav = Navigation(magnetometer);
 
@@ -53,16 +53,29 @@ void setup()
   long_meters = ((40075 * cos(lat_diff_radians) * 1000) / 360) * long_diff2; // Difference in long (in meters)
 
   n2 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / PATH_RESOLUTION; // number of array points for bottom line // number of array points for the bottom line
+
+  left_motor.toggle(true);
+  right_motor.toggle(true);
 }
 
 bool test_straight()
 {
-  nav.motor_control(0, 0, 0, true, 100);
+  nav.store_offset();
+  nav.motor_control(0, 0, 0, true, 255);
   return true;
 }
 
 bool test_turn()
 {
+  left_motor.set_speed(255);
+  right_motor.set_speed(255);
+  left_motor.set_direction(0);
+  right_motor.set_direction(1);
+  _delay_ms(5000);
+  left_motor.set_direction(1);
+  right_motor.set_direction(0);
+  _delay_ms(5000);
+  return true;
   float angle = magnetometer->get_angle();
   for (size_t i = 0; i < 6; i++)
   {
@@ -79,9 +92,9 @@ bool test_magneto()
 
 void loop()
 {
-  test_magneto();
-  // test_straight();
+  // test_magneto();
   // test_turn();
+  test_straight();
 
   // phase_one();
   // phase_two();
@@ -105,8 +118,8 @@ void phase_one(void)
     store_coordinates();
 
     // getting the next point if it's not in initialize otherwise call find_closest
-      i1_i2_init(&i1, &i2);
-      get_next_point(&i1, &i2);
+    i1_i2_init(&i1, &i2);
+    get_next_point(&i1, &i2);
 
     if (flip_flag == 0) // flipping the flip_flag so we take turns between target points on the bottom line and target points on the top line
     {
@@ -132,7 +145,6 @@ void phase_two(void)
   // use info from obstacle_array[] to get points
 
 } // end of phase_two()
-
 
 void get_next_point(int *i1, int *i2)
 {
@@ -178,7 +190,7 @@ void get_next_point(int *i1, int *i2)
         (*i2)--;
       }
     }
-      break;
+    break;
   case 3:
     if ((flip_flag == 0) && (*i2 > 0))
     { // target point on bottom line
@@ -222,13 +234,15 @@ void get_next_point(int *i1, int *i2)
   }
 }
 
-
-void i1_i2_init(int *i1, int *i2){
-  if((find_closest()==1) || (find_closest()==4)){
+void i1_i2_init(int *i1, int *i2)
+{
+  if ((find_closest() == 1) || (find_closest() == 4))
+  {
     *i1 = 0;
     *i2 = 0;
   }
-  else{
+  else
+  {
     *i1 = n1;
     *i2 = n2;
   }

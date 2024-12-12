@@ -13,13 +13,13 @@ private:
     bool is_clockwise;
     float offset;
     float get_offseted_angle() const;
-    void store_offset(float = 0);
 
     bool object_avoidance_mode;
 
 public:
     Navigation();
     Navigation(Magnetometer *);
+    void store_offset(float = 0);
     void motor_control(int8_t *i, int i1, int i2, bool, unsigned char = 255);
     void align_device(bool, bool, float);
     bool heading_forward(bool = false);

@@ -123,12 +123,12 @@ void Motor::set_direction(uint8_t direction)
     }
     break;
   case 2:               // Right track motor
-    if (direction == 1) // Forward
+    if (direction == 0) // Forward
     {
       PORTC |= (1 << PC1);
       PORTC &= ~(1 << PC2);
     }
-    else if (direction == 0) // Reverse
+    else if (direction == 1) // Reverse
     {
       PORTC &= ~(1 << PC1);
       PORTC |= (1 << PC2);
