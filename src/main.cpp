@@ -77,10 +77,12 @@ bool test_turn()
   right_motor.set_speed(255);
   left_motor.set_direction(0);
   right_motor.set_direction(1);
-  _delay_ms(5000);
+  Serial.println("1");
+  _delay_ms(2000);
   left_motor.set_direction(1);
   right_motor.set_direction(0);
-  _delay_ms(5000);
+  Serial.println("2");
+  _delay_ms(2000);
   return true;
   float angle = magnetometer->get_angle();
   for (size_t i = 0; i < 6; i++)
@@ -99,10 +101,10 @@ bool test_magneto()
 void loop()
 {
   // test_magneto();
-  // test_turn();
+   test_turn();
   // test_straight();
 
-  phase_one();
+  //phase_one();
   // phase_two();
 
   delay(1000);
