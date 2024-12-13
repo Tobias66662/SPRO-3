@@ -3,8 +3,11 @@
 #include "gps.h"
 #include "motor.h"
 #include "ultrasonic.h"
+#include "direction.h"
 
-#define CTRL_SIG_LIMIT 100
+#define CTRL_SIG_MAX 255
+#define CTRL_SIG_MIN 150
+#define ATTEMPT_ANGLE 90
 
 // declared in main
 int8_t obstacle_array[100];
@@ -115,7 +118,7 @@ bool is_border_hit()
     return topline_f || bottomline_f;
 }
 
-void check_obstacles(int8_t *i, int i1, int i2)
+bool check_obstacles(int8_t *i, int i1, int i2)
 {
     if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (obstacle_flag == 0))
     {
@@ -134,6 +137,8 @@ void check_obstacles(int8_t *i, int i1, int i2)
         }
 
         i += 2;
+
+        return true;
     }
     else if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (bottom_area_blocked_f == 1) && (obstacle_flag == 1))
     { // check when obstacle is no longer in the way and save those points
@@ -144,6 +149,8 @@ void check_obstacles(int8_t *i, int i1, int i2)
             obstacle_flag = 0;
             i += 2;
         }
+
+        return true;
     }
     else if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (bottom_area_blocked_f == 0) && (obstacle_flag == 1))
     {
@@ -154,13 +161,54 @@ void check_obstacles(int8_t *i, int i1, int i2)
             obstacle_flag = 0;
             i += 2;
         }
+
+        return true;
     }
+
+    return false;
 }
 
-void avoid_obsticales()
+void Navigation::avoid_obsticales()
 {
-    while (!checkFrontSensors(5))
+    char relevant_sensor = check_direction() ? LEFT_SENSOR : RIGHT_SENSOR;
+    int8_t attempt = ATTEMPT_ANGLE * (relevant_sensor == LEFT_SENSOR ? 1 : -1);
+
+    // start recursion by turns
+    if (checkFrontSensors(5))
     {
+        Serial.println("Object detected");
+
+        if (checkForObstacle((relevant_sensor == LEFT_SENSOR ? RIGHT_SENSOR : LEFT_SENSOR), 10))
+        {
+            Serial.println("Vehicle stuck");
+        }
+        else
+        {
+            turn(attempt);
+        }
+    }
+    else
+    {
+        // go forward, if detained continue recursion otherwise undo
+        while (!checkFrontSensors(5) && checkForObstacle(relevant_sensor, 10))
+        {
+            left_motor.set_direction(1);
+            right_motor.set_direction(1);
+
+            left_motor.set_speed(200);
+            right_motor.set_speed(200);
+        }
+        left_motor.set_speed(0);
+        right_motor.set_speed(0);
+
+        if (checkFrontSensors(5))
+        {
+            avoid_obsticales();
+        }
+        else
+        {
+            turn(attempt * -1);
+        }
     }
 }
 
@@ -171,12 +219,9 @@ void avoid_obsticales()
  * @param peak is 255 by default
  * proportional mode for straight vs linear for turn?
  */
-void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsigned char peak)
+void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight)
 {
-
-    if (peak < 1 || peak > 255)
-        peak = 255;
-
+    unsigned char peak = UINT8_MAX;
     int prevT = 0;
     int eintegral = 0;
     int eprev = 0;
@@ -206,19 +251,30 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsi
         // control signal
         float u = kp * e + kd * dedt + ki * eintegral;
 
+        // store previous error
+        eprev = e;
+
         float power = abs(u);
-        if (power > CTRL_SIG_LIMIT)
+        if (power > CTRL_SIG_MAX)
         {
-            power = CTRL_SIG_LIMIT;
+            power = CTRL_SIG_MAX;
         }
-
-        Serial.print("Applied power: ");
-        Serial.println(u);
-
-        uint8_t powerLeft = peak, powerRight = peak;
+        // avoid stalling the motors
+        else if (power < CTRL_SIG_MIN)
+        {
+            if (is_straight)
+            {
+                power = 0;
+            }
+            else
+            {
+                power = CTRL_SIG_MIN;
+            }
+        }
 
         if (is_straight)
         {
+            uint8_t powerLeft = peak, powerRight = peak;
             if (left)
             {
                 powerRight -= power; // if error 0 then decrease by zero
@@ -227,52 +283,53 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight, unsi
                 powerLeft -= power;
 
             left_motor.set_direction(1);
-            left_motor.set_speed(powerLeft);
             right_motor.set_direction(1);
+
+            left_motor.set_speed(powerLeft);
             right_motor.set_speed(powerRight);
+
+            Serial.print(powerLeft);
+            Serial.print(" - ");
+            Serial.println(powerRight);
         }
         else
         {
             if (left)
             {
-                powerLeft = power;
-
-                left_motor.set_speed(powerLeft);
                 left_motor.set_direction(1);
-                right_motor.set_speed(powerLeft);
                 right_motor.set_direction(0);
             }
             else
             {
-                powerRight = power;
-
-                right_motor.set_speed(powerRight);
-                right_motor.set_direction(1);
-                left_motor.set_speed(powerRight);
                 left_motor.set_direction(0);
+                right_motor.set_direction(1);
             }
+
+            left_motor.set_speed(power);
+            right_motor.set_speed(power);
+
+            Serial.print(power);
+            Serial.print(" - ");
+            Serial.println(left ? 'L' : 'R');
         }
-        Serial.print(powerLeft);
-        Serial.print(" - ");
-        Serial.println(powerRight);
 
-        // store previous error
-        eprev = e;
-
-        if (is_straight)
+        // disabled branch
+        if (false && is_straight)
         {
             if (object_avoidance_mode)
             {
+                // target stays, object will be avoided
+                float temp = offset;
                 avoid_obsticales();
+                offset = temp;
             }
             else
             {
-                check_obstacles(i, i1, i2);
-                break;
+                // this case the obstacle will not be avoided, rather getting new target
+                if (check_obstacles(i, i1, i2))
+                    break;
             }
         }
-
-        delay(100);
     } while ((is_straight && !is_border_hit()) || (!is_straight && eprev > 0));
 }
 

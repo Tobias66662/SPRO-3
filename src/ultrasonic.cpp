@@ -169,6 +169,11 @@ bool checkFrontSensors(uint8_t distance_cm)
   return false; // No object detected
 }
 
+bool checkSideSensors(uint8_t distance_cm)
+{
+  return checkForObstacle(LEFT_SENSOR, distance_cm) ||
+         checkForObstacle(RIGHT_SENSOR, distance_cm);
+}
 // case 1: PORTB = (1 << A) | ~(1 << B) | ~(1 << C);  break;
 //   case 2: PORTB = ~(1 << A) | (1 << B) | ~(1 << C);  break;
 //   case 3: PORTB = (1 << A) | (1 << B) | ~(1 << C);  break;

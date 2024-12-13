@@ -66,26 +66,31 @@ bool test_straight()
     nav.store_offset();
     i++;
   }
-  nav.motor_control(0, 0, 0, true, 255);
+  nav.motor_control(0, 0, 0, true);
   return true;
 }
 
-bool test_turn()
+bool test_motors()
 {
   left_motor.set_speed(255);
   right_motor.set_speed(255);
   left_motor.set_direction(0);
   right_motor.set_direction(1);
-  _delay_ms(5000);
+  delay(5000);
   left_motor.set_direction(1);
   right_motor.set_direction(0);
-  _delay_ms(5000);
+  delay(5000);
   return true;
+}
+
+bool test_turn()
+{
   float angle = magnetometer->get_angle();
-  for (size_t i = 0; i < 6; i++)
+  for (size_t i = 0; i < 3; i++)
   {
-    nav.turn(60);
+    nav.turn(120);
   }
+
   return angle == magnetometer->get_angle();
 }
 
@@ -98,13 +103,12 @@ bool test_magneto()
 void loop()
 {
   // test_magneto();
+  test_motors();
   // test_turn();
   // test_straight();
 
-  phase_one();
+  // phase_one();
   // phase_two();
-
-  delay(1000);
 }
 
 void phase_one(void)
