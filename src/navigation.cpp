@@ -10,13 +10,13 @@
 #define ATTEMPT_ANGLE 90
 
 // declared in main
-int8_t obstacle_array[100];
+int8_t obstacle_array[100]; // stores the i1 and i2 values when the obstacle_mode_f switches to 1 and stores them again to the next array elements when it switches back to 0
 
 // global
-bool flip_flag;
+bool flip_flag; // flag that flips to switch between targeting a point on the top line and the bottom line (check main to see when it's flipped)
 
-bool obstacle_flag = 0;
-bool bottom_area_blocked_f = 0; // will tell if the top or bottom area is left uncleaned
+bool obstacle_mode_f = 0; // tells if vehicle is in obstacle mode; obstacle mode starts when the vehicle sees an object for the first time and ends when it can again reach from top line to bottom line.
+bool bottom_area_blocked_f = 0; // tells if the top or bottom area is left uncleaned
 
 Navigation::Navigation() {} // not used but necessary for compiler
 Navigation::Navigation(Magnetometer *magnetometer)
@@ -120,9 +120,9 @@ bool is_border_hit()
 
 bool check_obstacles(int8_t *i, int i1, int i2)
 {
-    if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (obstacle_flag == 0))
+    if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (obstacle_mode_f == 0))
     {
-        obstacle_flag = 1;
+        obstacle_mode_f = 1;
         if (flip_flag == 0)
         {
             obstacle_array[*i] = i1;
@@ -140,25 +140,25 @@ bool check_obstacles(int8_t *i, int i1, int i2)
 
         return true;
     }
-    else if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (bottom_area_blocked_f == 1) && (obstacle_flag == 1))
+    else if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (bottom_area_blocked_f == 1) && (obstacle_mode_f == 1))
     { // check when obstacle is no longer in the way and save those points
         if (bottomline_f == 0)
         { // here we know the vehicle is no longer being blocked by an object
             obstacle_array[*i] = i1;
             obstacle_array[(*i)++] = i2;
-            obstacle_flag = 0;
+            obstacle_mode_f = 0;
             i += 2;
         }
 
         return true;
     }
-    else if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (bottom_area_blocked_f == 0) && (obstacle_flag == 1))
+    else if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (bottom_area_blocked_f == 0) && (obstacle_mode_f == 1))
     {
         if (topline_f == 0)
         { // here we know the vehicle is no longer being blocked by an object
             obstacle_array[*i] = i2;
             obstacle_array[(*i)++] = i1;
-            obstacle_flag = 0;
+            obstacle_mode_f = 0;
             i += 2;
         }
 

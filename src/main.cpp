@@ -18,8 +18,9 @@ Navigation nav;
 float long_diff1, lat_diff1, long_diff2, lat_diff2; // temporary variables used for calculating the difference in longitude and latitude, which are then converted in meters
 
 extern int8_t obstacle_array[100]; // Obstacle array storing the starting and ending i1/i2 values where the obstacle was detected for both the top and bottom line
-// For example, i values are stored as obstacle[0]= (i1 start value), obstacle[1]= (i2 start value), obstacle[2]= (i1 end value), obstacle[3]= (i2 end value): all of this is for the first object. From obstacle[4] to obstacle[7], it will be info for the second object and so on...
-// Allows storing areas for up to 25 object blocks.
+// For example, if(bottom_area_blocked_f); i values are stored as obstacle[0]= (i1 start value), obstacle[1]= (i2 start value), obstacle[2]= (i1 end value), obstacle[3]= (i2 end value): all of this is for the first object. From obstacle[4] to obstacle[7], it will be info for the second object and so on...
+//              if(!bottom_area_blocked_f); i values are stored as obstacle [0]= (i2 start value), obstacle[1]= (i1 start value)...
+// ^^ Allows storing areas for up to 25 object blocks. ^^
 
 void phase_one(void);
 void phase_two(void);
@@ -76,10 +77,12 @@ bool test_motors()
   right_motor.set_speed(255);
   left_motor.set_direction(0);
   right_motor.set_direction(1);
-  delay(5000);
+  Serial.println("1");
+  _delay_ms(2000);
   left_motor.set_direction(1);
   right_motor.set_direction(0);
-  delay(5000);
+  Serial.println("2");
+  _delay_ms(2000);
   return true;
 }
 
@@ -130,7 +133,7 @@ void phase_one(void)
 
     // getting the next point if it's not in initialize otherwise call find_closest
     i1_i2_init(&i1, &i2);
-    get_next_point(&i1, &i2);
+    get_next_point(&i1, &i2); // !!THIS NEEDS TO BE BEFORE FLIPPING THE FLAGS!!
 
     if (flip_flag == 0) // flipping the flip_flag so we take turns between target points on the bottom line and target points on the top line
     {
@@ -142,7 +145,7 @@ void phase_one(void)
     }
 
     // DISABLED
-    // check_obstacles(&i, i1, i2);
+    // check_obstacles(&i, i1, i2); // !!THIS NEEDS TO BE AFTER FLIPPING THE FLAG!!
     boundary_check();
     check_angle();
 

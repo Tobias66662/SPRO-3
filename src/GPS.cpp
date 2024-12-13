@@ -16,7 +16,7 @@
 // Connect the GPS RX (receive) pin to Digital 7
 
 // you can change the pin numbers to match your wiring:
-SoftwareSerial mySerial(8, 7); // mySerial object is created to pass two parameters: rx and tx respectively.
+SoftwareSerial mySerial(1, 0); // mySerial object is created to pass two parameters: rx and tx respectively.
 Adafruit_GPS GPS(&mySerial);   // GPS object created using the Adafruit_GPS class
 //====================
 // Constants
