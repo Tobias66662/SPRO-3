@@ -120,7 +120,7 @@ void check_obstacles(int8_t *i, int i1, int i2)
     if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (obstacle_mode_f == 0))
     {
         obstacle_mode_f = 1;
-        if ( (flip_flag == 0) && ( (find_closest()==1) || (find_closest() == 2) ) )
+        if (flip_flag == 0)
         {
             obstacle_array[*i] = i1;
             obstacle_array[(*i)++] = i2;
