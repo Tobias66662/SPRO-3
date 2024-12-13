@@ -127,7 +127,7 @@ void phase_one(void)
 
     // getting the next point if it's not in initialize otherwise call find_closest
     i1_i2_init(&i1, &i2);
-    get_next_point(&i1, &i2); // !!this needs to be before flipping the flip flag!!
+    get_next_point(&i1, &i2); // !!THIS NEEDS TO BE BEFORE FLIPPING THE FLAGS!!
 
     if (flip_flag == 0) // flipping the flip_flag so we take turns between target points on the bottom line and target points on the top line
     {
@@ -139,7 +139,7 @@ void phase_one(void)
     }
 
     // DISABLED
-    // check_obstacles(&i, i1, i2); // !!this needs to be after flipping the flip flag!!
+    // check_obstacles(&i, i1, i2); // !!THIS NEEDS TO BE AFTER FLIPPING THE FLAG!!
     boundary_check();
     check_angle();
 

@@ -105,7 +105,7 @@ void GPS_setup(void)
   // Request updates on antenna status, comment out to keep quiet
   GPS.sendCommand(PGCMD_ANTENNA);
 
-  delay(1000); // we use a delay to give the gps a second to start up and execute all commands
+  delay(1000); // use a delay to give the gps a second to start up and execute all commands
   // Ask for firmware version
   mySerial.println(PMTK_Q_RELEASE);
 }
