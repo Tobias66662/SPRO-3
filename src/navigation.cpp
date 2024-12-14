@@ -6,7 +6,7 @@
 #include "direction.h"
 
 #define CTRL_SIG_MAX 255
-#define CTRL_SIG_MIN 150
+#define CTRL_SIG_MIN 200
 #define ATTEMPT_ANGLE 90
 
 // declared in main

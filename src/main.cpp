@@ -73,59 +73,15 @@ bool test_straight()
 
 bool test_motors()
 {
-  Serial.println("Duty cycle: 50");
-  left_motor.set_speed(50);
-  right_motor.set_speed(50);
-  left_motor.set_direction(1);
-  right_motor.set_direction(1);
-
-    Serial.println("Duty cycle: 100");
-  left_motor.set_speed(100);
-  right_motor.set_speed(100);
-  left_motor.set_direction(1);
-  right_motor.set_direction(1);
-
-    Serial.println("Duty cycle: 150");
-  left_motor.set_speed(150);
-  right_motor.set_speed(150);
-  left_motor.set_direction(1);
-  right_motor.set_direction(1);
-
-    Serial.println("Duty cycle: 200");
-  left_motor.set_speed(200);
-  right_motor.set_speed(200);
-  left_motor.set_direction(1);
-  right_motor.set_direction(1);
-
-    Serial.println("Duty cycle: 210");
-  left_motor.set_speed(210);
-  right_motor.set_speed(210);
-  left_motor.set_direction(1);
-  right_motor.set_direction(1);
-
-    Serial.println("Duty cycle: 220");
-  left_motor.set_speed(220);
-  right_motor.set_speed(220);
-  left_motor.set_direction(1);
-  right_motor.set_direction(1);
-
-    Serial.println("Duty cycle: 230");
-  left_motor.set_speed(230);
-  right_motor.set_speed(230);
-  left_motor.set_direction(1);
-  right_motor.set_direction(1);
-
-  Serial.println("Duty cycle: 240");
-  left_motor.set_speed(240);
-  right_motor.set_speed(240);
-  left_motor.set_direction(1);
-  right_motor.set_direction(1);
-
-  Serial.println("Duty cycle: 255");
-  left_motor.set_speed(255);
-  right_motor.set_speed(255);
-  left_motor.set_direction(1);
-  right_motor.set_direction(1);
+  for(int i=200;i<255;i+=10){
+    Serial.print("Duty cycle:");
+    Serial.println(i);
+    left_motor.set_speed(i);
+    right_motor.set_speed(i);
+    left_motor.set_direction(1);
+    right_motor.set_direction(1);
+    _delay_ms(1000);
+  }
   return true;
 }
 
@@ -149,8 +105,8 @@ bool test_magneto()
 void loop()
 {
   // test_magneto();
-   test_motors();
-  // test_turn();
+  // test_motors();
+   test_turn();
   // test_straight();
 
   // phase_one();
