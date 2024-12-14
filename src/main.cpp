@@ -73,8 +73,8 @@ bool test_straight()
 
 bool test_motors()
 {
-  left_motor.set_speed(125);
-  right_motor.set_speed(125);
+  left_motor.set_speed(225);
+  right_motor.set_speed(225);
   left_motor.set_direction(0);
   right_motor.set_direction(1);
   Serial.println("1");
