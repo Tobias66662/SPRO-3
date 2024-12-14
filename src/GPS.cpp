@@ -76,7 +76,7 @@ uint8_t find_closest()
   store_coordinates();
 
   uint8_t closest;
-  float distance = 9999;
+  float distance = INFINITY;
   for (size_t i = 1; i < 5; i++)
   {
     float dist_x = abs(long_gps - LONG1);
@@ -88,6 +88,7 @@ uint8_t find_closest()
       closest = i;
     }
   }
+  Serial.println("Infinity works");
   return closest;
 }
 
@@ -105,7 +106,7 @@ void GPS_setup(void)
   // Request updates on antenna status, comment out to keep quiet
   GPS.sendCommand(PGCMD_ANTENNA);
 
-  delay(1000); // use a delay to give the gps a second to start up and execute all commands
+  _delay_ms(1000); // we use a delay to give the gps a second to start up and execute all commands
   // Ask for firmware version
   mySerial.println(PMTK_Q_RELEASE);
 }

@@ -88,11 +88,11 @@ bool Magnetometer::magnetometer_init()
     byte ack = writeRegister(0x07, 0x80);
     if (ack != 0)
         return false;
-    delay(60);
+    _delay_ms(60);
     ack = writeRegister(0x07, 0x20);
     if (ack != 0)
         return false;
-    delay(10);
+    _delay_ms(10);
     if (!readData())
         return false;
     for (int i = 0; i < 3; i++)
@@ -102,11 +102,11 @@ bool Magnetometer::magnetometer_init()
     ack = writeRegister(0x07, 0x80);
     if (ack != 0)
         return false;
-    delay(60);
+    _delay_ms(60);
     ack = writeRegister(0x07, 0x40);
     if (ack != 0)
         return false;
-    delay(10);
+    _delay_ms(10);
     if (!readData())
         return false;
     for (int i = 0; i < 3; i++)
@@ -120,11 +120,11 @@ bool Magnetometer::magnetometer_init()
     ack = writeRegister(0x07, 0x40);
     if (ack != 0)
         return false;
-    delay(10);
+    _delay_ms(10);
     ack = writeRegister(0x08, 0x00);
     if (ack != 0)
         return false;
-    delay(10);
+    _delay_ms(10);
     // Serial.print(offset[0]); Serial.print(" "); Serial.print(offset[1]); Serial.print(" "); Serial.print(offset[2]); Serial.print(" ");
     // Serial.println("object offset");
     return true;
