@@ -90,7 +90,7 @@ bool test_turn()
   float angle = magnetometer->get_angle();
   for (size_t i = 0; i < 3; i++)
   {
-    nav.turn(120);
+    nav.turn(360);
   }
 
   return angle == magnetometer->get_angle();
@@ -106,10 +106,10 @@ void loop()
 {
   // test_magneto();
   // test_motors();
-   test_turn();
+  // test_turn();
   // test_straight();
 
-  // phase_one();
+  phase_one();
   // phase_two();
 }
 
@@ -117,10 +117,11 @@ void phase_one(void)
 {
   boundary_check(); // needs to happen first to initialise the GPS, store the first coordinates and finally calculate the gradients and intercepts needed for the point arrays
   check_angle();
-  check_direction();
+  // check_direction(); // Not needed for now
 
   int i1, i2;
-  // intialize(&i1, i2);
+
+  i1_i2_init(&i1, &i2);
 
   int8_t i = 0;
 

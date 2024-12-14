@@ -29,7 +29,7 @@ Adafruit_GPS GPS(&mySerial);   // GPS object created using the Adafruit_GPS clas
 //====================
 // Global Variables
 //====================
-bool standby_flag = 0; // Standby flag tied to GPS.fix function returning 1 when the vehicles needs to be in standby mode(wait for GPS to connect to satellites) and 0 when it can continue(GPS location can be retrieved).
+bool standby_flag = 1; // Standby flag tied to GPS.fix function returning 1 when the vehicles needs to be in standby mode(wait for GPS to connect to satellites) and 0 when it can continue(GPS location can be retrieved).
 bool do_once_flag = 0; // Flag used for making sure the calculations in boundary_check() are done only once.
 
 // Flags for letting us know if we are in or out of each boundary line (0 means we are outside and 1 means we are inside).
