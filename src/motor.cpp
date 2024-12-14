@@ -23,7 +23,7 @@ void Motor::initialize()
   TCCR0A = 0x00;                         // Reset in case arduino.h fucked with something
   TCCR0B = 0x00;                         // Reset in case arduino.h fucked with something
   TCCR0A |= (1 << WGM00) | (1 << WGM01); // Fast PWM mode
-  TCCR0B |= (1 << CS01) | (1 << CS01);   // 16 bit prescaler
+  TCCR0B |= (1 << CS00) | (1 << CS01);   // 64 bit prescaler
 
   // L298N Dual H-bridge driver board
   DDRB |= (1 << PB5); // IN1 pin
