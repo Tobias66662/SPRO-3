@@ -57,6 +57,9 @@ void setup()
 
   left_motor.toggle(true);
   right_motor.toggle(true);
+
+  GPS_setup(); // GPS intialiser (with a 1 sec delay to give the gps some time to execute all commands)
+  gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
 }
 
 bool test_straight()
@@ -131,7 +134,7 @@ void phase_one(void)
   Serial.println("Standby flag before standby flag check:");
   Serial.print(standby_flag);
     while (standby_flag){
-      store_coordinates();
+      store_coordinates(); // program gets stuck here (check millis() function which uses timer0 ) try using our delay() instead
     }
   Serial.println("Standby flag after standby flag turns to 0:");
   Serial.print(standby_flag);
@@ -145,7 +148,7 @@ void phase_one(void)
     i1_i2_init(&i1, &i2);
   Serial.println("i1, i2:");
   Serial.println(i1, i2);
-    get_next_point(&i1, &i2); // !!THIS NEEDS TO BE BEFORE FLIPPING THE FLAGS!!
+    get_next_point(&i1, &i2); // !!THIS NEEDS TO BE CALLED BEFORE FLIPPING THE FLAGS!!
 
     if (flip_flag == 0) // flipping the flip_flag so we take turns between target points on the bottom line and target points on the top line
     {
@@ -160,13 +163,14 @@ void phase_one(void)
   Serial.println(flip_flag);
 
     // DISABLED
-    // check_obstacles(&i, i1, i2); // !!THIS NEEDS TO BE AFTER FLIPPING THE FLAG!!
+    // check_obstacles(&i, i1, i2); // !!THIS NEEDS TO BE CALLED AFTER FLIPPING THE FLAG!!
     boundary_check();
     check_angle();
 
     nav.turn(angle_diff);
     nav.motor_control(&i, i1, i2, true); // remove these ugly placeholders as a temporary
   }
+  Serial.print("Exit while loop. Ready for Phase two.");
 } // end of phase_one()
 
 void phase_two(void)

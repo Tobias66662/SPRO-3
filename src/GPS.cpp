@@ -57,8 +57,6 @@ int n2 = 0; // Array size for bottom line
 float lat_gps = 0;
 float long_gps = 0;
 
-uint32_t timer = millis(); // will be removed once code is integrated
-
 //====================
 // Function Definitions
 //====================
@@ -127,11 +125,6 @@ void store_coordinates(void)
         return;                       // we can fail to parse a sentence in which case we should just wait for another
     }
 
-  // approximately every 2 seconds or so, print out the current stats(remove timer when integrating to the project)
-  if (millis() - timer > 2000)
-  {
-    timer = millis(); // reset the timer
-
     if (GPS.fix)
     { // GPS.fix returns the fix status, where 0 means no fix and 1 means there is a fix.
       lat_gps = GPS.latitude_fixed / 1.0E7;
@@ -141,25 +134,13 @@ void store_coordinates(void)
       standby_flag = 0;
     }
     else
-    {
-      // Satellites not detected! Location data cannot be retreived!
+    { // Satellites not detected! Location data cannot be retreived!
       standby_flag = 1;
     }
-  }
 }
 
 void boundary_check(void)
 { // check if the vehicle is out of bounds
-
-  if (do_once_flag == 0)
-  { // only executed once to create the straight line equation variables and array points
-
-    GPS_setup(); // GPS intialiser
-
-    gradient_and_intercept_calc(); // getting our gradient and intercept for our straight line equations
-
-    do_once_flag = 1;
-  }
 
   // TOP BOUNDARY
   if (lat_gps > (m1 * long_gps + c1))

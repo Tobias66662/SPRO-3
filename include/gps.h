@@ -20,6 +20,8 @@ extern float target_point_long;
 
 void boundary_check();
 void store_coordinates();
+void gradient_and_intercept_calc();
+void GPS_setup();
 uint8_t find_closest();
 
 #define BOUNDARY_CONSTANTS
