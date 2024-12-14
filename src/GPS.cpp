@@ -12,8 +12,8 @@
 
 // Connect the GPS Power pin to 5V
 // Connect the GPS Ground pin to ground
-// Connect the GPS TX (transmit) pin to Digital 8
-// Connect the GPS RX (receive) pin to Digital 7
+// Connect the GPS TX (transmit) pin to Arduino RX
+// Connect the GPS RX (receive) pin to Arduino TX
 
 // you can change the pin numbers to match your wiring:
 SoftwareSerial mySerial(1, 0); // mySerial object is created to pass two parameters: rx and tx respectively.
