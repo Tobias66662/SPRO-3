@@ -114,29 +114,28 @@ void store_coordinates(void)
 
   char c = GPS.read(); // storing the characters coming through the serial bus in a 'c' char.
 
-  if ((c) && (GPSECHO))
-    // Serial.write(c);
+  if ((c) && (GPSECHO)) // this is underlined but probably not an issue...
 
-    // if a sentence is received, we can check the checksum, parse it...
-    if (GPS.newNMEAreceived())
-    {
+  // if a sentence is received, we can check the checksum, parse it...
+  if (GPS.newNMEAreceived())
+  {
 
-      if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
-        return;                       // we can fail to parse a sentence in which case we should just wait for another
-    }
+    if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
+      return;                       // we can fail to parse a sentence in which case we should just wait for another
+  }
 
-    if (GPS.fix)
-    { // GPS.fix returns the fix status, where 0 means no fix and 1 means there is a fix.
-      lat_gps = GPS.latitude_fixed / 1.0E7;
-      // Serial.print(GPS.lat); // returns N/S for North/South (uncomment if needed)
-      long_gps = GPS.longitude_fixed / 1.0E7;
-      // Serial.println(GPS.lon); // returns E/W for East/West (uncomment if needed)
-      standby_flag = 0;
-    }
-    else
-    { // Satellites not detected! Location data cannot be retreived!
-      standby_flag = 1;
-    }
+  if (GPS.fix)
+  { // GPS.fix returns the fix status, where 0 means no fix and 1 means there is a fix.
+    lat_gps = GPS.latitude_fixed / 1.0E7;
+    // Serial.print(GPS.lat); // returns N/S for North/South (uncomment if needed)
+    long_gps = GPS.longitude_fixed / 1.0E7;
+    // Serial.println(GPS.lon); // returns E/W for East/West (uncomment if needed)
+    standby_flag = 0;
+  }
+  else
+  { // Satellites not detected! Location data cannot be retreived!
+    standby_flag = 1;
+  }
 }
 
 void boundary_check(void)
