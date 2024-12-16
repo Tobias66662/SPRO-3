@@ -64,7 +64,7 @@ bool test_straight()
   static char i = 0;
   if (i == 0)
   {
-    nav.store_offset();
+    nav.store_target();
     i++;
   }
   nav.motor_control(0, 0, 0, true);
@@ -73,26 +73,33 @@ bool test_straight()
 
 bool test_motors()
 {
-  for(int i=200;i<255;i+=10){
-    Serial.print("Duty cycle:");
-    Serial.println(i);
-    left_motor.set_speed(i);
-    right_motor.set_speed(i);
-    left_motor.set_direction(1);
-    right_motor.set_direction(1);
-    _delay_ms(1000);
-  }
+  left_motor.set_speed(255);
+  right_motor.set_speed(255);
+  left_motor.set_direction(1);
+  right_motor.set_direction(0);
+  // for (int i = 200; i < 255; i += 10)
+  // {
+  //   Serial.print("Duty cycle:");
+  //   Serial.println(i);
+  //   left_motor.set_speed(i);
+  //   right_motor.set_speed(i);
+  //   left_motor.set_direction(1);
+  //   right_motor.set_direction(1);
+  //   _delay_ms(1000);
+  // }
   return true;
 }
 
 bool test_turn()
 {
   float angle = magnetometer->get_angle();
-  for (size_t i = 0; i < 3; i++)
+  for (size_t i = 0; i < 2; i++)
   {
-    nav.turn(120);
+    nav.turn(180);
   }
 
+  left_motor.toggle(0);
+  right_motor.toggle(0);
   return angle == magnetometer->get_angle();
 }
 
@@ -106,8 +113,9 @@ void loop()
 {
   // test_magneto();
   // test_motors();
-   test_turn();
-  // test_straight();
+
+  // test_turn();
+  test_straight();
 
   // phase_one();
   // phase_two();
