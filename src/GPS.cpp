@@ -99,6 +99,20 @@ uint8_t find_closest()
   return closest;
 }
 
+float remaining_distance(){
+  float rem_dis_meters; // remaining distance between the two points (in meters)
+
+  float lat_diff = target_point_lat - lat_gps;                               // Difference in lat (in degrees)    
+  float lat_diff_radians = (lat_diff * PI) / 180;                            // Difference in lat (in rads)
+  float long_diff = target_point_long - long_gps;                            // Difference in long (in degrees)
+
+  float lat_diff_meters = lat_diff * 111000;                                            // Difference in lat (in meters)   
+  float long_diff_meters = ((40075 * cos(lat_diff_radians) * 1000) / 360) * long_diff;  // Difference in long (in meters)
+
+  rem_dis_meters = sqrt(lat_diff_meters*lat_diff_meters + long_diff_meters*long_diff_meters); // pythagorean theorem to calculate distance between the target point and current vehicle position
+  return rem_dis_meters;
+}
+
 void GPS_setup(void)
 {                     // initializer
   Serial.begin(9600); // initialising the serial monitor
@@ -237,10 +251,10 @@ void gradient_and_intercept_calc()
   b3 = boundaries[2].lat - boundaries[3].lat;
   b4 = boundaries[3].lat - boundaries[0].lat;
   // Calculating the gradient m for each line
-  m1 = b1 / a1; // gradient of our top line       DEBUG Check: good
-  m2 = b2 / a2; // gradient of our right line     DEBUG Check: good
-  m3 = b3 / a3; // gradient of our bottom line    DEBUG Check: good
-  m4 = b4 / a4; // gradient of our left line      DEBUG Check: good
+  m1 = b1 / a1; // gradient of our top line      
+  m2 = b2 / a2; // gradient of our right line     
+  m3 = b3 / a3; // gradient of our bottom line   
+  m4 = b4 / a4; // gradient of our left line      
 
   // Calculating the intercept c for each line
   c1 = boundaries[0].lat - m1 * boundaries[0].lon; // intercept of our top line // NOTE: LONG AND LAT MIGHT NEED TO BE SWAPPED
