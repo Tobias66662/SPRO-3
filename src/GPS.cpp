@@ -16,7 +16,7 @@
 // Connect the GPS RX (receive) pin to Arduino TX
 
 // you can change the pin numbers to match your wiring:
-SoftwareSerial mySerial(1, 0); // mySerial object is created to pass two parameters: rx and tx respectively.
+SoftwareSerial mySerial(3, 4); // mySerial object is created to pass two parameters: rx and tx respectively.
 Adafruit_GPS GPS(&mySerial);   // GPS object created using the Adafruit_GPS class
 //====================
 // Constants
@@ -29,7 +29,7 @@ Adafruit_GPS GPS(&mySerial);   // GPS object created using the Adafruit_GPS clas
 //====================
 // Global Variables
 //====================
-bool standby_flag = 0; // Standby flag tied to GPS.fix function returning 1 when the vehicles needs to be in standby mode(wait for GPS to connect to satellites) and 0 when it can continue(GPS location can be retrieved).
+bool standby_flag = 1; // Standby flag tied to GPS.fix function returning 1 when the vehicles needs to be in standby mode(wait for GPS to connect to satellites) and 0 when it can continue(GPS location can be retrieved).
 bool do_once_flag = 0; // Flag used for making sure the calculations in boundary_check() are done only once.
 
 // Flags for letting us know if we are in or out of each boundary line (0 means we are outside and 1 means we are inside).
@@ -56,8 +56,6 @@ int n2 = 0; // Array size for bottom line
 // variables storing the current latitude and longitude given by the gps
 float lat_gps = 0;
 float long_gps = 0;
-
-uint32_t timer = millis(); // will be removed once code is integrated
 
 //====================
 // Function Definitions
@@ -116,50 +114,32 @@ void store_coordinates(void)
 
   char c = GPS.read(); // storing the characters coming through the serial bus in a 'c' char.
 
-  if ((c) && (GPSECHO))
-    // Serial.write(c);
+  if ((c) && (GPSECHO)) // this is underlined but probably not an issue...
 
-    // if a sentence is received, we can check the checksum, parse it...
-    if (GPS.newNMEAreceived())
-    {
-
-      if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
-        return;                       // we can fail to parse a sentence in which case we should just wait for another
-    }
-
-  // approximately every 2 seconds or so, print out the current stats(remove timer when integrating to the project)
-  if (millis() - timer > 2000)
+  // if a sentence is received, we can check the checksum, parse it...
+  if (GPS.newNMEAreceived())
   {
-    timer = millis(); // reset the timer
 
-    if (GPS.fix)
-    { // GPS.fix returns the fix status, where 0 means no fix and 1 means there is a fix.
-      lat_gps = GPS.latitude_fixed / 1.0E7;
-      // Serial.print(GPS.lat); // returns N/S for North/South (uncomment if needed)
-      long_gps = GPS.longitude_fixed / 1.0E7;
-      // Serial.println(GPS.lon); // returns E/W for East/West (uncomment if needed)
-      standby_flag = 0;
-    }
-    else
-    {
-      // Satellites not detected! Location data cannot be retreived!
-      standby_flag = 1;
-    }
+    if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
+      return;                       // we can fail to parse a sentence in which case we should just wait for another
+  }
+
+  if (GPS.fix)
+  { // GPS.fix returns the fix status, where 0 means no fix and 1 means there is a fix.
+    lat_gps = GPS.latitude_fixed / 1.0E7;
+    // Serial.print(GPS.lat); // returns N/S for North/South (uncomment if needed)
+    long_gps = GPS.longitude_fixed / 1.0E7;
+    // Serial.println(GPS.lon); // returns E/W for East/West (uncomment if needed)
+    standby_flag = 0;
+  }
+  else
+  { // Satellites not detected! Location data cannot be retreived!
+    standby_flag = 1;
   }
 }
 
 void boundary_check(void)
 { // check if the vehicle is out of bounds
-
-  if (do_once_flag == 0)
-  { // only executed once to create the straight line equation variables and array points
-
-    GPS_setup(); // GPS intialiser
-
-    gradient_and_intercept_calc(); // getting our gradient and intercept for our straight line equations
-
-    do_once_flag = 1;
-  }
 
   // TOP BOUNDARY
   if (lat_gps > (m1 * long_gps + c1))
