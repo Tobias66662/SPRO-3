@@ -40,17 +40,17 @@ void setup()
   flip_flag = 0;
   float lat_meters, long_meters, lat_diff_radians; // temporary variables used for calculating the difference in long and lat in meters, which will be used in calculating the number of points for the top and bottom line
 
-  lat_diff1 = LAT2 - LAT1;                                                   // Difference in lat (in degrees)
+  lat_diff1 = boundaries[1].lat - boundaries[0].lat;                                                   // Difference in lat (in degrees)
   lat_diff_radians = (lat_diff1 * PI) / 180;                                 // Difference in lat, but in radians, because the cos() function only takes radians
-  long_diff1 = LONG2 - LONG1;                                                // Difference in long (in degrees)
+  long_diff1 = boundaries[1].lon - boundaries[0].lon;                                                // Difference in long (in degrees)
   lat_meters = lat_diff1 * 111000;                                           // Difference in lat (in meters)
   long_meters = ((40075 * cos(lat_diff_radians) * 1000) / 360) * long_diff1; // Difference in long (in meters)
 
   n1 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / PATH_RESOLUTION; // number of array points for top line (Note: calculation returns a floating point number, but since n1 and n2 are an int, they will be rounded)
 
-  lat_diff2 = LAT3 - LAT4;                                                   // Difference in lat (in degrees)
+  lat_diff2 = boundaries[2].lat - boundaries[3].lat;                                                   // Difference in lat (in degrees)
   lat_diff_radians = (lat_diff2 * PI) / 180;                                 // Difference in lat (in rads)
-  long_diff2 = LONG3 - LONG4;                                                // Difference in long (in degrees)
+  long_diff2 = boundaries[2].lon - boundaries[3].lon;                                                // Difference in long (in degrees)
   lat_meters = lat_diff2 * 111000;                                           // Difference in lat (in meters)
   long_meters = ((40075 * cos(lat_diff_radians) * 1000) / 360) * long_diff2; // Difference in long (in meters)
 
@@ -67,7 +67,7 @@ void loop()
   // test_turn();
   // test_straight();
 
-  phase_one();
+   phase_one();
   // phase_two();
 }
 
@@ -133,8 +133,8 @@ void get_next_point(int *i1, int *i2)
   case 1:
     if ((flip_flag == 0) && (*i1 <= n1))
     { // target point on top line
-      target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
-      target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+      target_point_lat = (boundaries[0].lat + (lat_diff1 / n1) * *i1);
+      target_point_long = (boundaries[0].lon + (long_diff1 / n1) * *i1);
       if (*i1 <= n1)
       {
         (*i1)++;
@@ -142,8 +142,8 @@ void get_next_point(int *i1, int *i2)
     }
     if ((flip_flag == 1) && (*i2 <= n2))
     { // target point on bottom line
-      target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
-      target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+      target_point_lat = (boundaries[3].lat + (lat_diff2 / n2) * *i2);
+      target_point_long = (boundaries[3].lon + (long_diff2 / n2) * *i2);
       if (*i2 <= 0)
       {
         (*i2)++;
@@ -153,8 +153,8 @@ void get_next_point(int *i1, int *i2)
   case 2:
     if ((flip_flag == 0) && (*i1 > 0))
     { // target point on top line
-      target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
-      target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+      target_point_lat = (boundaries[0].lat + (lat_diff1 / n1) * *i1);
+      target_point_long = (boundaries[0].lon + (long_diff1 / n1) * *i1);
       if (*i1 > 0)
       {
         (*i1)--;
@@ -162,8 +162,8 @@ void get_next_point(int *i1, int *i2)
     }
     if ((flip_flag == 1) && (*i2 > 0))
     { // target point on bottom line
-      target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
-      target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+      target_point_lat = (boundaries[3].lat + (lat_diff2 / n2) * *i2);
+      target_point_long = (boundaries[3].lon + (long_diff2 / n2) * *i2);
       if (*i2 > 0)
       {
         (*i2)--;
@@ -173,8 +173,8 @@ void get_next_point(int *i1, int *i2)
   case 3:
     if ((flip_flag == 0) && (*i2 > 0))
     { // target point on bottom line
-      target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
-      target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+      target_point_lat = (boundaries[3].lat + (lat_diff2 / n2) * *i2);
+      target_point_long = (boundaries[3].lon + (long_diff2 / n2) * *i2);
       if (*i2 > 0)
       {
         (*i2)--;
@@ -182,8 +182,8 @@ void get_next_point(int *i1, int *i2)
     }
     if ((flip_flag == 1) && (*i1 > 0))
     { // target point on top line
-      target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
-      target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+      target_point_lat = (boundaries[0].lat + (lat_diff1 / n1) * *i1);
+      target_point_long = (boundaries[0].lon + (long_diff1 / n1) * *i1);
       if (*i1 > 0)
       {
         (*i1)--;
@@ -193,8 +193,8 @@ void get_next_point(int *i1, int *i2)
   case 4:
     if ((flip_flag == 0) && (*i2 <= n2))
     { // target point on bottom line
-      target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
-      target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+      target_point_lat = (boundaries[3].lat + (lat_diff2 / n2) * *i2);
+      target_point_long = (boundaries[3].lon + (long_diff2 / n2) * *i2);
       if (*i2 <= 0)
       {
         (*i2)++;
@@ -202,8 +202,8 @@ void get_next_point(int *i1, int *i2)
     }
     if ((flip_flag == 1) && (*i1 <= n1))
     { // target point on top line
-      target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
-      target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+      target_point_lat = (boundaries[0].lat + (lat_diff1 / n1) * *i1);
+      target_point_long = (boundaries[0].lon + (long_diff1 / n1) * *i1);
       if (*i1 <= n1)
       {
         (*i1)++;

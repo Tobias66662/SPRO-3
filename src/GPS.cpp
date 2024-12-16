@@ -75,10 +75,10 @@ uint8_t find_closest()
 
   uint8_t closest;
   float distance = INFINITY;
-  for (size_t i = 1; i < 5; i++)
+  for (size_t i = 0; i < 4; i++)
   {
-    float dist_x = abs(long_gps - LONG1);
-    float dist_y = abs(lat_gps - LAT1);
+    float dist_x = abs(long_gps - boundaries[0].lon);
+    float dist_y = abs(lat_gps - boundaries[0].lat);
 
     if (distance > sqrt(dist_x * dist_x + dist_y * dist_y))
     {
@@ -214,15 +214,15 @@ void gradient_and_intercept_calc()
   float b1, b2, b3, b4; // b for calculating the gradient (denominator) y-latitude
 
   // Calculating the difference between longitudes(x) to get the numerator for calculating the gradient
-  a1 = LONG1 - LONG2;
-  a2 = LONG2 - LONG3;
-  a3 = LONG3 - LONG4;
-  a4 = LONG4 - LONG1;
+  a1 = boundaries[0].lon - boundaries[1].lon;
+  a2 = boundaries[1].lon - boundaries[2].lon;
+  a3 = boundaries[2].lon - boundaries[3].lon;
+  a4 = boundaries[3].lon - boundaries[0].lon;
   // Calculating the difference between latitudes(y) to get the denominator for calculating the gradient
-  b1 = LAT1 - LAT2;
-  b2 = LAT2 - LAT3;
-  b3 = LAT3 - LAT4;
-  b4 = LAT4 - LAT1;
+  b1 = boundaries[0].lat - boundaries[1].lat;
+  b2 = boundaries[1].lat - boundaries[2].lat;
+  b3 = boundaries[2].lat - boundaries[3].lat;
+  b4 = boundaries[3].lat - boundaries[0].lat;
   // Calculating the gradient m for each line
   m1 = b1 / a1; // gradient of our top line       DEBUG Check: good
   m2 = b2 / a2; // gradient of our right line     DEBUG Check: good
@@ -230,10 +230,10 @@ void gradient_and_intercept_calc()
   m4 = b4 / a4; // gradient of our left line      DEBUG Check: good
 
   // Calculating the intercept c for each line
-  c1 = LAT1 - m1 * LONG1; // intercept of our top line // NOTE: LONG AND LAT MIGHT NEED TO BE SWAPPED
-  c2 = LAT2 - m2 * LONG2; // intercept of our right line
-  c3 = LAT3 - m3 * LONG3; // intercept of our bottom line
-  c4 = LAT4 - m4 * LONG4; // intercept of our left line
+  c1 = boundaries[0].lat - m1 * boundaries[0].lon; // intercept of our top line // NOTE: LONG AND LAT MIGHT NEED TO BE SWAPPED
+  c2 = boundaries[1].lat - m2 * boundaries[1].lon; // intercept of our right line
+  c3 = boundaries[2].lat - m3 * boundaries[2].lon; // intercept of our bottom line
+  c4 = boundaries[3].lat - m4 * boundaries[3].lon; // intercept of our left line
 }
 
 // Notes: when referring to 'top' line and 'bottom' line, these are the top(North) and bottom(South) boundaries of the area of operation (AO).
