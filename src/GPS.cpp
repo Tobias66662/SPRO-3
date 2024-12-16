@@ -77,8 +77,8 @@ uint8_t find_closest()
   float distance = INFINITY;
   for (size_t i = 0; i < 4; i++)
   {
-    float dist_x = abs(lat_gps - boundaries[i].lat);
-    float dist_y = abs(long_gps - boundaries[i].lon);
+    float dist_x = abs(long_gps - boundaries[0].lon);
+    float dist_y = abs(lat_gps - boundaries[0].lat);
 
     if (distance > sqrt(dist_x * dist_x + dist_y * dist_y))
     {
@@ -218,10 +218,10 @@ void gradient_and_intercept_calc()
   float b1, b2, b3, b4; // b for calculating the gradient (denominator) y-latitude
 
   // Calculating the difference between longitudes(x) to get the numerator for calculating the gradient
-  a1 = LONG1 - LONG2;
-  a2 = LONG2 - LONG3;
-  a3 = LONG3 - boundaries[3].lat;
-  a4 = boundaries[3].lat - LONG1;
+  a1 = boundaries[0].lon - boundaries[1].lon;
+  a2 = boundaries[1].lon - boundaries[2].lon;
+  a3 = boundaries[2].lon - boundaries[3].lon;
+  a4 = boundaries[3].lon - boundaries[0].lon;
   // Calculating the difference between latitudes(y) to get the denominator for calculating the gradient
   b1 = boundaries[0].lat - boundaries[1].lat;
   b2 = boundaries[1].lat - boundaries[2].lat;
@@ -234,10 +234,10 @@ void gradient_and_intercept_calc()
   m4 = b4 / a4; // gradient of our left line      DEBUG Check: good
 
   // Calculating the intercept c for each line
-  c1 = boundaries[0].lat - m1 * LONG1;             // intercept of our top line // NOTE: LONG AND LAT MIGHT NEED TO BE SWAPPED
-  c2 = boundaries[1].lat - m2 * LONG2;             // intercept of our right line
-  c3 = boundaries[2].lat - m3 * LONG3;             // intercept of our bottom line
-  c4 = boundaries[3].lat - m4 * boundaries[3].lat; // intercept of our left line
+  c1 = boundaries[0].lat - m1 * boundaries[0].lon; // intercept of our top line // NOTE: LONG AND LAT MIGHT NEED TO BE SWAPPED
+  c2 = boundaries[1].lat - m2 * boundaries[1].lon; // intercept of our right line
+  c3 = boundaries[2].lat - m3 * boundaries[2].lon; // intercept of our bottom line
+  c4 = boundaries[3].lat - m4 * boundaries[3].lon; // intercept of our left line
 }
 
 // Notes: when referring to 'top' line and 'bottom' line, these are the top(North) and bottom(South) boundaries of the area of operation (AO).

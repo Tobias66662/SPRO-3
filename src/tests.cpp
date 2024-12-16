@@ -16,15 +16,11 @@ bool test_straight() // TEST ========== IGNORE
 
 bool test_motors()
 {
-  for(int i=200;i<255;i+=10){
-    Serial.print("Duty cycle:");
-    Serial.println(i);
-    left_motor.set_speed(i);
-    right_motor.set_speed(i);
+    left_motor.set_speed(255);
+    right_motor.set_speed(255);
     left_motor.set_direction(1);
     right_motor.set_direction(1);
     _delay_ms(1000);
-  }
   return true;
 }
 
