@@ -25,6 +25,8 @@ void gradient_and_intercept_calc();
 void boundary_check();
 void store_coordinates();
 uint8_t find_closest();
+float distance_points(point, point);
+float remaining_distance();
 
 extern point boundaries[];
 #endif

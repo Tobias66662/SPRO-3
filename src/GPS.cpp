@@ -74,6 +74,12 @@ void GPS_setup(void);
 //====================
 // Function Prototypes
 //====================
+float distance_points(point p1, point p2){
+    float dist_lon = abs(p1.lon - p2.lon);
+    float dist_lat = abs(p1.lat - p2.lat);
+
+    return sqrt(dist_lon * dist_lon + dist_lat * dist_lat);
+}
 
 uint8_t find_closest()
 {
@@ -83,12 +89,9 @@ uint8_t find_closest()
   float distance = INFINITY;
   for (size_t i = 0; i < 4; i++)
   {
-    float dist_x = abs(long_gps - boundaries[0].lon);
-    float dist_y = abs(lat_gps - boundaries[0].lat);
-
-    if (distance > sqrt(dist_x * dist_x + dist_y * dist_y))
+    if (distance < distance_points(point(lat_gps, long_gps), boundaries[i]))
     {
-      distance = sqrt(dist_x * dist_x + dist_y * dist_y);
+      distance = distance_points(point(lat_gps, long_gps), boundaries[i]);
       closest = i;
     }
   }
