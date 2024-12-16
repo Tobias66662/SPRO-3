@@ -50,7 +50,7 @@ bool check_direction(void)
     return direction_f;
 }
 
-int8_t check_angle(void)
+int8_t get_angle(void)
 {
     uint8_t m1_angle_deg = magnetometer->get_angle(); // m1 angle is given by the azimuth (0-360, where North is 0)
 

@@ -33,9 +33,9 @@ void setup()
   gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
   // Serial.begin(9600); // this is already in GPS_setup
 
-  //Motor::initialize();
-  //magnetometer = new Magnetometer();
-  //nav = Navigation(magnetometer);
+  // Motor::initialize();
+  // magnetometer = new Magnetometer();
+  // nav = Navigation(magnetometer);
 
   flip_flag = 0;
   float lat_meters, long_meters, lat_diff_radians; // temporary variables used for calculating the difference in long and lat in meters, which will be used in calculating the number of points for the top and bottom line
@@ -71,41 +71,39 @@ void loop()
   // phase_two();
 }
 
+void check_gps()
+{
+  float begin = millis() + 5000;
+
+  while (standby_flag)
+  {
+    store_coordinates();
+
+    if (millis() > begin)
+    {
+      Serial.println("Waiting for GPS signal...");
+      begin = millis() + 5000;
+    }
+  }
+}
+
 void phase_one(void)
 {
   int i1, i2;
+  check_gps();
   i1_i2_init(&i1, &i2);
 
   int8_t i = 0;
-  
+
   while (((i1 >= 0) && (i2 >= 0)) && ((i1 <= n1) && (i1 <= n2)))
   {
-  Serial.print("Standby flag before standby flag check: ");
-  Serial.println(standby_flag);
-
-    while (standby_flag){ // if fix is lost, stop the vehicle
-      store_coordinates(); // program gets stuck here
-      _delay_ms(1000);
-      // left_motor.set_speed(0);
-      // right_motor.set_speed(0);
-    }
-  Serial.print("Standby flag after standby flag turns to 0: ");
-  Serial.println(standby_flag);
-    store_coordinates();
-
-  Serial.print("Latitude: ");
-  Serial.println(lat_gps, 10);
-  Serial.print("Longitude: ");
-  Serial.println(long_gps, 10);
-
-    // getting the next point if it's not in initialize otherwise call find_closest
-    i1_i2_init(&i1, &i2);
+    check_gps();
+    Serial.print("Latitude: ");
+    Serial.println(lat_gps, 10);
+    Serial.print("Longitude: ");
+    Serial.println(long_gps, 10);
 
     get_next_point(&i1, &i2); // !!THIS NEEDS TO BE CALLED BEFORE FLIPPING THE FLAGS!!
-
-    boundary_check(); // store the first coordinates
-    check_angle();
-    // check_direction(); // Not needed for now
 
     if (flip_flag == 0) // flipping the flip_flag so we take turns between target points on the bottom line and target points on the top line
     {
@@ -116,12 +114,7 @@ void phase_one(void)
       flip_flag = 0;
     }
 
-    // DISABLED
-    // check_obstacles(&i, i1, i2); // !!THIS NEEDS TO BE CALLED AFTER FLIPPING THE FLAG!!
-    boundary_check();
-    check_angle();
-
-    nav.turn(angle_diff);
+    nav.turn(get_angle());
     nav.motor_control(&i, i1, i2, true); // remove these ugly placeholders as a temporary
   }
 } // end of phase_one()
