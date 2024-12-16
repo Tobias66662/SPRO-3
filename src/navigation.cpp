@@ -6,7 +6,7 @@
 #include "direction.h"
 
 #define CTRL_SIG_MAX 255
-#define CTRL_SIG_MIN 200
+#define CTRL_SIG_MIN 220
 #define ATTEMPT_ANGLE 90
 
 // declared in main
@@ -15,7 +15,7 @@ int8_t obstacle_array[100]; // stores the i1 and i2 values when the obstacle_mod
 // global
 bool flip_flag; // flag that flips to switch between targeting a point on the top line and the bottom line (check main to see when it's flipped)
 
-bool obstacle_mode_f = 0; // tells if vehicle is in obstacle mode; obstacle mode starts when the vehicle sees an object for the first time and ends when it can again reach from top line to bottom line.
+bool obstacle_mode_f = 0;       // tells if vehicle is in obstacle mode; obstacle mode starts when the vehicle sees an object for the first time and ends when it can again reach from top line to bottom line.
 bool bottom_area_blocked_f = 0; // tells if the top or bottom area is left uncleaned
 
 Navigation::Navigation() {} // not used but necessary for compiler
@@ -67,18 +67,22 @@ float convert(float angle)
 /**
  * stores existing offset increased by @param offset resulting between 0 to 360
  */
-void Navigation::store_offset(float offset)
+void Navigation::store_target(float offset)
 {
+    float current_angle = magnetometer->get_angle();
+    Serial.print("Devices current angle: ");
+    Serial.println(current_angle);
     if (abs(offset) > 360)
         offset = (int)floor(abs(offset)) % 360;
 
-    this->offset = magnetometer->get_angle() + offset;
+    this->target = current_angle + offset;
 
-    if (this->offset > 360)
-        this->offset -= 360;
-    else if (this->offset < 0)
-        this->offset += 360;
-    // Serial.print("Offset stored: "); Serial.println(this->offset);
+    if (this->target > 360)
+        this->target -= 360;
+    else if (this->target < 0)
+        this->target += 360;
+    Serial.print("Target stored: ");
+    Serial.println(this->target);
 }
 
 /**
@@ -87,16 +91,17 @@ void Navigation::store_offset(float offset)
 float Navigation::get_offseted_angle() const
 {
     float angle = magnetometer->get_angle();
-    float res = convert(angle - this->offset);
-    // Serial.print(angle);
-    // Serial.print(" - Offset: ");
+    float res = convert(angle - this->target);
+    Serial.print(angle);
+    Serial.print(" - Offset: ");
     Serial.println(res);
     return res;
 }
 
 void Navigation::turn(float angle)
 {
-    store_offset(angle);
+    store_target(angle);
+    _delay_ms(3000);
     motor_control(0, 0, 0, false);
 }
 
@@ -260,16 +265,13 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight)
             power = CTRL_SIG_MAX;
         }
         // avoid stalling the motors
-        else if (power < CTRL_SIG_MIN)
+        else if (!is_straight && power < CTRL_SIG_MIN)
         {
-            if (is_straight)
-            {
-                power = 0;
-            }
-            else
-            {
-                power = CTRL_SIG_MIN;
-            }
+            power = CTRL_SIG_MIN;
+        }
+        else if (is_straight && peak - power < CTRL_SIG_MIN)
+        {
+            power = peak;
         }
 
         if (is_straight)
@@ -296,13 +298,13 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight)
         {
             if (left)
             {
-                left_motor.set_direction(1);
-                right_motor.set_direction(0);
+                left_motor.set_direction(0);
+                right_motor.set_direction(1);
             }
             else
             {
-                left_motor.set_direction(0);
-                right_motor.set_direction(1);
+                left_motor.set_direction(1);
+                right_motor.set_direction(0);
             }
 
             left_motor.set_speed(power);
@@ -319,9 +321,9 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight)
             if (object_avoidance_mode)
             {
                 // target stays, object will be avoided
-                float temp = offset;
+                float temp = target;
                 avoid_obsticales();
-                offset = temp;
+                target = temp;
             }
             else
             {
@@ -330,7 +332,9 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight)
                     break;
             }
         }
-    } while ((is_straight && !is_border_hit()) || (!is_straight && eprev > 0));
+
+        _delay_ms(750);
+    } while ((is_straight && !is_border_hit()) || (!is_straight && eprev > 5));
 }
 
 // offseted angle pointing to the target
@@ -346,7 +350,7 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight)
 //     turn(difference, is_clockwise);
 //     is_clockwise = !is_clockwise;
 
-//     store_offset();
+//     store_target();
 // }
 
 /**

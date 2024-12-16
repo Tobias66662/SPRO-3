@@ -5,6 +5,8 @@
 #include "magnetometer.h"
 #include "direction.h"
 #include "gps.h"
+#include "motor.h"
+#include "current.h"
 #include "navigation.h"
 #include "motor.h"
 
@@ -58,7 +60,7 @@ void setup()
   left_motor.toggle(true);
   right_motor.toggle(true);
 
-  GPS_setup(); // GPS intialiser (with a 1 sec delay to give the gps some time to execute all commands)
+  GPS_setup();                   // GPS intialiser (with a 1 sec delay to give the gps some time to execute all commands)
   gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
 }
 
@@ -67,14 +69,14 @@ bool test_straight() // TEST ========== IGNORE
   static char i = 0;
   if (i == 0)
   {
-    nav.store_offset();
+    nav.store_target();
     i++;
   }
   nav.motor_control(0, 0, 0, true);
   return true;
 }
 
-bool test_motors() // TEST ========== IGNORE
+bool test_motors()
 {
   for(int i=200;i<255;i+=10){
     Serial.print("Duty cycle:");
@@ -91,11 +93,13 @@ bool test_motors() // TEST ========== IGNORE
 bool test_turn()  // TEST ========== IGNORE
 {
   float angle = magnetometer->get_angle();
-  for (size_t i = 0; i < 3; i++)
+  for (size_t i = 0; i < 2; i++)
   {
-    nav.turn(360);
+    nav.turn(180);
   }
 
+  left_motor.toggle(0);
+  right_motor.toggle(0);
   return angle == magnetometer->get_angle();
 }
 
@@ -109,7 +113,7 @@ void loop()
 {
   // test_magneto();
   // test_motors();
-  // test_turn();
+  test_turn();
   // test_straight();
 
   phase_one();
@@ -119,7 +123,7 @@ void loop()
 void phase_one(void)
 {
   int i1, i2;
-  i1_i2_init(&i1,&i2);
+  i1_i2_init(&i1, &i2);
 
   int8_t i = 0;
   
@@ -135,7 +139,6 @@ void phase_one(void)
     }
   Serial.println("Standby flag after standby flag turns to 0:");
   Serial.print(standby_flag);
-
     store_coordinates();
 
   Serial.println("Latitude:");
@@ -164,8 +167,8 @@ void phase_one(void)
       flip_flag = 0;
     }
 
-  Serial.print("flip flag:");
-  Serial.println(flip_flag);
+    Serial.print("flip flag:");
+    Serial.println(flip_flag);
 
     // DISABLED
     // check_obstacles(&i, i1, i2); // !!THIS NEEDS TO BE CALLED AFTER FLIPPING THE FLAG!!

@@ -11,7 +11,7 @@ class Navigation
 private:
     Magnetometer *magnetometer;
     bool is_clockwise;
-    float offset;
+    float target;
     float get_offseted_angle() const;
 
     bool object_avoidance_mode;
@@ -19,7 +19,7 @@ private:
 public:
     Navigation();
     Navigation(Magnetometer *);
-    void store_offset(float = 0);
+    void store_target(float = 0);
     void motor_control(int8_t *i, int i1, int i2, bool);
     void align_device(bool, bool, float);
     bool heading_forward(bool = false);
