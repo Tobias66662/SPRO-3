@@ -62,7 +62,7 @@ void setup()
   gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
 }
 
-bool test_straight()
+bool test_straight() // TEST ========== IGNORE
 {
   static char i = 0;
   if (i == 0)
@@ -74,7 +74,7 @@ bool test_straight()
   return true;
 }
 
-bool test_motors()
+bool test_motors() // TEST ========== IGNORE
 {
   for(int i=200;i<255;i+=10){
     Serial.print("Duty cycle:");
@@ -88,7 +88,7 @@ bool test_motors()
   return true;
 }
 
-bool test_turn()
+bool test_turn()  // TEST ========== IGNORE
 {
   float angle = magnetometer->get_angle();
   for (size_t i = 0; i < 3; i++)
@@ -99,7 +99,7 @@ bool test_turn()
   return angle == magnetometer->get_angle();
 }
 
-bool test_magneto()
+bool test_magneto() // TEST ========== IGNORE
 {
   Serial.println(magnetometer->get_angle());
   return true;
@@ -118,27 +118,26 @@ void loop()
 
 void phase_one(void)
 {
-  boundary_check(); // needs to happen first to initialise the GPS, store the first coordinates and finally calculate the gradients and intercepts needed for the point arrays
-  check_angle();
-  // check_direction(); // Not needed for now
-
   int i1, i2;
   i1_i2_init(&i1,&i2);
 
   int8_t i = 0;
   
-
-
   while (((i1 >= 0) && (i2 >= 0)) && ((i1 <= n1) && (i1 <= n2)))
   {
   Serial.println("Standby flag before standby flag check:");
   Serial.print(standby_flag);
-    while (standby_flag){
-      store_coordinates(); // program gets stuck here (check millis() function which uses timer0 ) try using our delay() instead
+
+    while (standby_flag){ // if fix is lost, stop the vehicle
+      store_coordinates(); // program gets stuck here
+      // left_motor.set_speed(0);
+      // right_motor.set_speed(0);
     }
   Serial.println("Standby flag after standby flag turns to 0:");
   Serial.print(standby_flag);
+
     store_coordinates();
+
   Serial.println("Latitude:");
   Serial.print(lat_gps, 10);
   Serial.println("Longitude:");
@@ -146,9 +145,15 @@ void phase_one(void)
 
     // getting the next point if it's not in initialize otherwise call find_closest
     i1_i2_init(&i1, &i2);
+
   Serial.println("i1, i2:");
   Serial.println(i1, i2);
+
     get_next_point(&i1, &i2); // !!THIS NEEDS TO BE CALLED BEFORE FLIPPING THE FLAGS!!
+
+    boundary_check(); // store the first coordinates
+    check_angle();
+    // check_direction(); // Not needed for now
 
     if (flip_flag == 0) // flipping the flip_flag so we take turns between target points on the bottom line and target points on the top line
     {

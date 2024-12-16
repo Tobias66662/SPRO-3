@@ -18,10 +18,10 @@ extern float long_gps;
 extern float target_point_lat;
 extern float target_point_long;
 
+void GPS_setup();
+void gradient_and_intercept_calc();
 void boundary_check();
 void store_coordinates();
-void gradient_and_intercept_calc();
-void GPS_setup();
 uint8_t find_closest();
 
 #define BOUNDARY_CONSTANTS
