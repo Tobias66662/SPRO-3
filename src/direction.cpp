@@ -7,6 +7,7 @@
 #include "magnetometer.h"
 #include "gps.h"
 #include "direction.h"
+#include "tests.h"
 
 int8_t angle_diff = 0; // variable returning the angle between the vector pointing  to the target point and the vector facing the same direction as the vehicle (passed to PD control)
 bool direction_f;      // flag returning which direction the vehicle should turn to face a point of interest (1 represents left and 0 represents right)

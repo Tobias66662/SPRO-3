@@ -1,6 +1,5 @@
 #include "tests.h"
 
-Magnetometer *magnetometer;
 Navigation nav;
 
 bool test_straight() // TEST ========== IGNORE
