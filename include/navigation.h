@@ -2,6 +2,7 @@
 #define NAVIGATION_H
 
 extern bool flip_flag;
+extern bool full_flag;
 
 #include "magnetometer.h"
 

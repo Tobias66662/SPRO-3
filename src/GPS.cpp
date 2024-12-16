@@ -77,8 +77,8 @@ uint8_t find_closest()
   float distance = INFINITY;
   for (size_t i = 1; i < 5; i++)
   {
-    float dist_x = abs(long_gps - LONG1);
-    float dist_y = abs(lat_gps - LAT1);
+    float dist_x = abs(lat_gps - boundaries[i].lat);
+    float dist_y = abs(long_gps - boundaries[i].lon);
 
     if (distance > sqrt(dist_x * dist_x + dist_y * dist_y))
     {
@@ -86,7 +86,7 @@ uint8_t find_closest()
       closest = i;
     }
   }
-  Serial.println("Infinity works");
+
   return closest;
 }
 
@@ -116,20 +116,21 @@ void store_coordinates(void)
 
   if ((c) && (GPSECHO))
 
-  // if a sentence is received, we can check the checksum, parse it...
-  if (GPS.newNMEAreceived())
-  {
-    if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
-      return;                       // we can fail to parse a sentence in which case we should just wait for another
-  }
-  Serial.println("print before fix check");
+    // if a sentence is received, we can check the checksum, parse it...
+    if (GPS.newNMEAreceived())
+    {
+
+      if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
+        return;                       // we can fail to parse a sentence in which case we should just wait for another
+    }
+
   if (GPS.fix)
   { // GPS.fix returns the fix status as true or false
-  Serial.println("WE GOT A FIX YAAAAAAAAAAAAAAAAAAAAAAY");
+    Serial.println("WE GOT A FIX YAAAAAAAAAAAAAAAAAAAAAAY");
     lat_gps = GPS.latitude_fixed / 1.0E7;
 
     long_gps = GPS.longitude_fixed / 1.0E7;
-  
+
     standby_flag = 0;
   }
   else
@@ -217,10 +218,10 @@ void gradient_and_intercept_calc()
   float b1, b2, b3, b4; // b for calculating the gradient (denominator) y-latitude
 
   // Calculating the difference between longitudes(x) to get the numerator for calculating the gradient
-  a1 = LONG1 - LONG2;
-  a2 = LONG2 - LONG3;
-  a3 = LONG3 - LONG4;
-  a4 = LONG4 - LONG1;
+  a1 = boundaries[1-1].lon - boundaries[;
+  a2 = boundaries[2-1].lon - boundaries[LONG3;
+  a3 = boundaries[3-1].lon - boundaries[LONG4;
+  a4 = boundaries[4-1].lon - boundaries[LONG1;
   // Calculating the difference between latitudes(y) to get the denominator for calculating the gradient
   b1 = LAT1 - LAT2;
   b2 = LAT2 - LAT3;

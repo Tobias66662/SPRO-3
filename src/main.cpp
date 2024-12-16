@@ -33,9 +33,11 @@ void setup()
   gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
   // Serial.begin(9600); // this is already in GPS_setup
 
-  // Motor::initialize();
-  // magnetometer = new Magnetometer();
-  // nav = Navigation(magnetometer);
+  Motor::initialize();
+  ADC_Init();
+
+  magnetometer = new Magnetometer();
+  nav = Navigation(magnetometer);
 
   flip_flag = 0;
   float lat_meters, long_meters, lat_diff_radians; // temporary variables used for calculating the difference in long and lat in meters, which will be used in calculating the number of points for the top and bottom line

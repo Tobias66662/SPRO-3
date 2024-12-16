@@ -2,6 +2,8 @@
 
 #define _GPS_H_
 
+#include "point.h"
+
 extern bool standby_flag;
 
 extern bool topline_f;
@@ -24,19 +26,9 @@ void boundary_check();
 void store_coordinates();
 uint8_t find_closest();
 
-#define BOUNDARY_CONSTANTS
-// The four points defining our boundary (in decimal degrees):
-// Point 1 (top left)
-#define LAT1 54.912155631362886
-#define LONG1 9.779128545696924
-// Point 2 (top right)
-#define LAT2 54.912202342965166
-#define LONG2 9.779243666022944
-// Point 3 (bottom right)
-#define LAT3 54.912142007135344
-#define LONG3 9.779319848591634
-// Point 4 (bottom left)
-#define LAT4 54.912116704986275
-#define LONG4 9.779199649427701
+point boundaries[] = {point(54.912155631362886, 9.779128545696924),
+point(54.912202342965166, 9.779243666022944),
+point(54.912142007135344, 9.779319848591634),
+point(54.912116704986275, 9.779199649427701) };
 
 #endif
