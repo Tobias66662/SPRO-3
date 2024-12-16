@@ -4,16 +4,19 @@
 #include "motor.h"
 #include "ultrasonic.h"
 #include "direction.h"
+#include "current.h"
 
 #define CTRL_SIG_MAX 255
 #define CTRL_SIG_MIN 220
 #define ATTEMPT_ANGLE 90
+#define BIN_TRIGGERED 5
 
 // declared in main
 int8_t obstacle_array[100]; // stores the i1 and i2 values when the obstacle_mode_f switches to 1 and stores them again to the next array elements when it switches back to 0
 
 // global
 bool flip_flag; // flag that flips to switch between targeting a point on the top line and the bottom line (check main to see when it's flipped)
+bool full_flag; // flip when trash is full
 
 bool obstacle_mode_f = 0;       // tells if vehicle is in obstacle mode; obstacle mode starts when the vehicle sees an object for the first time and ends when it can again reach from top line to bottom line.
 bool bottom_area_blocked_f = 0; // tells if the top or bottom area is left uncleaned
@@ -320,6 +323,7 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight)
         {
             if (object_avoidance_mode)
             {
+                brush_motor.toggle(0);
                 // target stays, object will be avoided
                 float temp = target;
                 avoid_obsticales();
@@ -327,9 +331,17 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight)
             }
             else
             {
+                brush_motor.toggle(1);
+
                 // this case the obstacle will not be avoided, rather getting new target
                 if (check_obstacles(i, i1, i2))
                     break;
+
+                if (voltage_reached(BIN_TRIGGERED))
+                {
+                    full_flag = true;
+                    break;
+                }
             }
         }
 

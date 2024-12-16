@@ -105,14 +105,7 @@ void phase_one(void)
 
     get_next_point(&i1, &i2); // !!THIS NEEDS TO BE CALLED BEFORE FLIPPING THE FLAGS!!
 
-    if (flip_flag == 0) // flipping the flip_flag so we take turns between target points on the bottom line and target points on the top line
-    {
-      flip_flag = 1;
-    }
-    else
-    {
-      flip_flag = 0;
-    }
+    flip_flag = !flip_flag;
 
     nav.turn(get_angle());
     nav.motor_control(&i, i1, i2, true); // remove these ugly placeholders as a temporary
