@@ -3,6 +3,8 @@
 #include "magnetometer.h"
 #include "direction.h"
 #include "gps.h"
+#include "motor.h"
+#include "current.h"
 #include <Adafruit_GPS.h>
 
 #include <SoftwareSerial.h>
