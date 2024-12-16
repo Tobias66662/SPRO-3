@@ -18,13 +18,13 @@
 #define Echo PB0 // Reflection pin
 #define Trig PB3 // Trigger pin 
 
-//################################________GLOBAL_VARIABLES________############################################
+// ################################________GLOBAL_VARIABLES________############################################
 
 volatile uint16_t pulse_width = 0;
 volatile uint8_t edge_rising = 1;
 volatile uint8_t overflow = 0; // timer overflow counter
 
-//################################________FUNCTION_PRECALLS________############################################
+// ################################________FUNCTION_PRECALLS________############################################
 
 uint16_t calculateDistance();
 void ultrasonicInit();
@@ -34,11 +34,11 @@ bool checkForObstacle(uint8_t sensor, uint8_t distance_cm);
 void MUXState(uint8_t sensor);
 bool checkFrontSensors(uint8_t distance_cm);
 
-//################################___________INTERRUPTS_____________############################################
+// ################################___________INTERRUPTS_____________############################################
 
 ISR(TIMER1_CAPT_vect) // Interrupt on PB0
 {
-  if(edge_rising)
+  if (edge_rising)
   {
     TCNT1 = 0;                // Reset Timer1 counter
     TCCR1B &= ~(1 << ICES1);  // Change input capture to falling edge
@@ -62,7 +62,7 @@ ISR(TIMER1_OVF_vect)
   if(overflow > 100) overflow = 0;
 }
 
-//################################___________FUNCTIONS_____________############################################
+// ################################___________FUNCTIONS_____________############################################
 
 // Checks for objects within a specified distance of the sensor. Returns true if a object is detected
 bool checkForObstacle(uint8_t sensor, uint8_t distance_cm)
@@ -72,7 +72,7 @@ bool checkForObstacle(uint8_t sensor, uint8_t distance_cm)
   else return false;
 }
 
-// Returns distance from sensor to 
+// Returns distance from sensor to
 uint16_t getDistance(uint8_t sensor)
 {
   triggerSensor(sensor); // Trigger the ultrasonic sensor
@@ -102,7 +102,7 @@ void triggerSensor(uint8_t sensor)
 uint16_t calculateDistance()
 {
   // Calculate and return distance in cm
-  return (speed * (pulse_width * 0.0005))/2;
+  return (speed * (pulse_width * 0.0005)) / 2;
 }
 
 void ultrasonicInit()
@@ -114,10 +114,10 @@ void ultrasonicInit()
   DDRB |= (1 << Trig); //  Configures the Trig pin to be an output
   
   // Timer 1 (input capture unit)
-  TCCR1A = 0; // Normal mode
-  TCCR1B = 0; // Reset in case arduino.h fucked with something
-  TIMSK1 = 0; // Reset in case arduino.h fucked with something
-  TCCR1C = 0; // Reset in case arduino.h fucked with something
+  TCCR1A = 0;                            // Normal mode
+  TCCR1B = 0;                            // Reset in case arduino.h fucked with something
+  TIMSK1 = 0;                            // Reset in case arduino.h fucked with something
+  TCCR1C = 0;                            // Reset in case arduino.h fucked with something
   TCCR1B |= (1 << ICES1) | (1 << ICNC1); // Set input capture to rising edge And enables input noise cancelation
   TIMSK1 |= (1 << ICIE1); // Enable input capture interrupt
   TCCR1B |= (1 << CS11); // Start timer with prescaler of 8
@@ -128,23 +128,40 @@ void MUXState(uint8_t sensor)
 {
   switch (sensor)
   {
-  case 0: PORTB &= ~((1 << A_control) | (1 << B_control) | (1 << C_control));  break;
-  case 1: PORTB = (PORTB & ~((1 << B_control) | (1 << C_control))) | (1 << A_control);  break;
-  case 2: PORTB = (PORTB & ~((1 << A_control) | (1 << C_control))) | (1 << B_control);  break;
-  case 3: PORTB = (PORTB & ~(1 << C_control)) | (1 << A_control) | (1 << B_control);  break;
-  case 4: PORTB = (PORTB & ~((1 << A_control) | (1 << B_control))) | (1 << C_control);  break;
-  case 5: PORTB = (PORTB & ~(1 << B_control)) | (1 << A_control) | (1 << C_control);  break;
-  case 6: PORTB = (PORTB & ~(1 << A_control)) | (1 << B_control) | (1 << C_control);  break;
-  case 7: PORTB |= (1 << A_control) | (1 << B_control) | (1 << C_control);  break;
+  case 0:
+    PORTB &= ~((1 << A_control) | (1 << B_control) | (1 << C_control));
+    break;
+  case 1:
+    PORTB = (PORTB & ~((1 << B_control) | (1 << C_control))) | (1 << A_control);
+    break;
+  case 2:
+    PORTB = (PORTB & ~((1 << A_control) | (1 << C_control))) | (1 << B_control);
+    break;
+  case 3:
+    PORTB = (PORTB & ~(1 << C_control)) | (1 << A_control) | (1 << B_control);
+    break;
+  case 4:
+    PORTB = (PORTB & ~((1 << A_control) | (1 << B_control))) | (1 << C_control);
+    break;
+  case 5:
+    PORTB = (PORTB & ~(1 << B_control)) | (1 << A_control) | (1 << C_control);
+    break;
+  case 6:
+    PORTB = (PORTB & ~(1 << A_control)) | (1 << B_control) | (1 << C_control);
+    break;
+  case 7:
+    PORTB |= (1 << A_control) | (1 << B_control) | (1 << C_control);
+    break;
   }
   _delay_ms(10);
 }
 
 bool checkFrontSensors(uint8_t distance_cm)
 {
-  for(int i = 0; i <= 5; i++)
+  for (int i = 0; i <= 5; i++)
   {
-    if(checkForObstacle(i, distance_cm)) return true; // Object detected
+    if (checkForObstacle(i, distance_cm))
+      return true; // Object detected
   }
   return false; // No object detected
 }

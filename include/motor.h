@@ -3,18 +3,17 @@
 
 #include <stdint.h> // For uint8_t type
 
-void motor_init();
-
-class Motor {
-  public:
+class Motor
+{
+public:
   Motor(uint8_t motor_id) : motor_id(motor_id) {} // Constructor initializer
   static void initialize();
   void set_speed(uint8_t duty_cycle);
   void toggle(bool state);
   void set_direction(uint8_t direction);
 
-  private:
-  uint8_t motor_id;
+private:
+  const uint8_t motor_id;
   bool motor_state; // Track motor state (on/off)
 };
 
