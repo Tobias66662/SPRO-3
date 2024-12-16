@@ -14,7 +14,6 @@
 #define PATH_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
 
 // Globals
-
 float long_diff1, lat_diff1, long_diff2, lat_diff2; // temporary variables used for calculating the difference in longitude and latitude, which are then converted in meters
 
 extern int8_t obstacle_array[100]; // Obstacle array storing the starting and ending i1/i2 values where the obstacle was detected for both the top and bottom line
@@ -81,22 +80,23 @@ void phase_one(void)
   
   while (((i1 >= 0) && (i2 >= 0)) && ((i1 <= n1) && (i1 <= n2)))
   {
-  Serial.println("Standby flag before standby flag check:");
-  Serial.print(standby_flag);
+  Serial.print("Standby flag before standby flag check: ");
+  Serial.println(standby_flag);
 
     while (standby_flag){ // if fix is lost, stop the vehicle
       store_coordinates(); // program gets stuck here
+      _delay_ms(1000);
       // left_motor.set_speed(0);
       // right_motor.set_speed(0);
     }
-  Serial.println("Standby flag after standby flag turns to 0:");
-  Serial.print(standby_flag);
+  Serial.print("Standby flag after standby flag turns to 0: ");
+  Serial.println(standby_flag);
     store_coordinates();
 
-  Serial.println("Latitude:");
-  Serial.print(lat_gps, 10);
-  Serial.println("Longitude:");
-  Serial.print(long_gps, 10);
+  Serial.print("Latitude: ");
+  Serial.println(lat_gps, 10);
+  Serial.print("Longitude: ");
+  Serial.println(long_gps, 10);
 
     // getting the next point if it's not in initialize otherwise call find_closest
     i1_i2_init(&i1, &i2);

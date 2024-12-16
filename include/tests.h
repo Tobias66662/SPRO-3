@@ -14,7 +14,6 @@
 #include "tests.h"
 
 extern Magnetometer *magnetometer;
-
 extern Navigation nav;
 
 bool test_straight();
