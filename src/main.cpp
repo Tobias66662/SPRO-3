@@ -9,11 +9,8 @@
 #include "current.h"
 #include "navigation.h"
 #include "motor.h"
-#include "tests.h"
 
 #define PATH_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
-
-// Globals
 
 float long_diff1, lat_diff1, long_diff2, lat_diff2; // temporary variables used for calculating the difference in longitude and latitude, which are then converted in meters
 
@@ -30,13 +27,13 @@ void i1_i2_init(int *i1, int *i2);
 
 void setup()
 {
-  GPS_setup();                   // GPS intialiser (with a 1 sec delay to give the gps some time to execute all commands)
-  gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
-  // Serial.begin(9600); // this is already in GPS_setup
+  Serial.begin(9600);
 
-  //Motor::initialize();
-  //magnetometer = new Magnetometer();
-  //nav = Navigation(magnetometer);
+  Motor::initialize();
+  ADC_Init();
+
+  magnetometer = new Magnetometer();
+  nav = Navigation(magnetometer);
 
   flip_flag = 0;
   float lat_meters, long_meters, lat_diff_radians; // temporary variables used for calculating the difference in long and lat in meters, which will be used in calculating the number of points for the top and bottom line
@@ -57,8 +54,11 @@ void setup()
 
   n2 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / PATH_RESOLUTION; // number of array points for bottom line // number of array points for the bottom line
 
-  // left_motor.toggle(true);
-  // right_motor.toggle(true);
+  left_motor.toggle(true);
+  right_motor.toggle(true);
+
+  GPS_setup();                   // GPS intialiser (with a 1 sec delay to give the gps some time to execute all commands)
+  gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
 }
 
 void loop()
@@ -74,38 +74,36 @@ void loop()
 
 void phase_one(void)
 {
+  boundary_check(); // needs to happen first to initialise the GPS, store the first coordinates and finally calculate the gradients and intercepts needed for the point arrays
+  check_angle();
+  // check_direction(); // Not needed for now
+
   int i1, i2;
   i1_i2_init(&i1, &i2);
 
   int8_t i = 0;
-  
+
   while (((i1 >= 0) && (i2 >= 0)) && ((i1 <= n1) && (i1 <= n2)))
   {
-  Serial.println("Standby flag before standby flag check:");
-  Serial.print(standby_flag);
-
-    while (standby_flag){ // if fix is lost, stop the vehicle
-      store_coordinates(); // program gets stuck here
-      // left_motor.set_speed(0);
-      // right_motor.set_speed(0);
+    Serial.println("Standby flag before standby flag check:");
+    Serial.print(standby_flag);
+    while (standby_flag)
+    {
+      store_coordinates(); // program gets stuck here (check millis() function which uses timer0 ) try using our delay() instead
     }
-  Serial.println("Standby flag after standby flag turns to 0:");
-  Serial.print(standby_flag);
+    Serial.println("Standby flag after standby flag turns to 0:");
+    Serial.print(standby_flag);
     store_coordinates();
-
-  Serial.println("Latitude:");
-  Serial.print(lat_gps, 10);
-  Serial.println("Longitude:");
-  Serial.print(long_gps, 10);
+    Serial.println("Latitude:");
+    Serial.print(lat_gps, 10);
+    Serial.println("Longitude:");
+    Serial.print(long_gps, 10);
 
     // getting the next point if it's not in initialize otherwise call find_closest
     i1_i2_init(&i1, &i2);
-
+    Serial.println("i1, i2:");
+    Serial.println(i1, i2);
     get_next_point(&i1, &i2); // !!THIS NEEDS TO BE CALLED BEFORE FLIPPING THE FLAGS!!
-
-    boundary_check(); // store the first coordinates
-    check_angle();
-    // check_direction(); // Not needed for now
 
     if (flip_flag == 0) // flipping the flip_flag so we take turns between target points on the bottom line and target points on the top line
     {
@@ -116,6 +114,9 @@ void phase_one(void)
       flip_flag = 0;
     }
 
+    Serial.print("flip flag:");
+    Serial.println(flip_flag);
+
     // DISABLED
     // check_obstacles(&i, i1, i2); // !!THIS NEEDS TO BE CALLED AFTER FLIPPING THE FLAG!!
     boundary_check();
@@ -124,6 +125,7 @@ void phase_one(void)
     nav.turn(angle_diff);
     nav.motor_control(&i, i1, i2, true); // remove these ugly placeholders as a temporary
   }
+  Serial.print("Exit while loop. Ready for Phase two.");
 } // end of phase_one()
 
 void phase_two(void)
