@@ -9,24 +9,26 @@
 //---------CONSTANTS------------
 #define Echo_Trig PB0 // Reflection and Trigger pin combined
 #define speed 34 // speed of sound in cm/ms
+#define MAX_PULSE_WIDTH 47059 // ca 400cm or 4m
+#define MAX_PULSE_WIDTH_OVERFLOW 60000 // (510 cm) Value given if pulse exceeded max value 
 #define A_control PB1
 #define B_control PB2
 #define C_control PB4
 
-// #define Echo PB0 // Reflection pin
-// #define Trig PB3 // Trigger pin 
+#define Echo PB0 // Reflection pin
+#define Trig PB3 // Trigger pin 
 
 //################################________GLOBAL_VARIABLES________############################################
 
 volatile uint16_t pulse_width = 0;
 volatile uint8_t edge_rising = 1;
-volatile uint16_t k = 0;
+volatile uint8_t overflow = 0; // timer overflow counter
 
 //################################________FUNCTION_PRECALLS________############################################
 
 uint16_t calculateDistance();
 void ultrasonicInit();
-void TriggerSensor(uint8_t sensor);
+void triggerSensor(uint8_t sensor);
 uint16_t getDistance(uint8_t sensor);
 bool checkForObstacle(uint8_t sensor, uint8_t distance_cm);
 void MUXState(uint8_t sensor);
@@ -38,20 +40,26 @@ ISR(TIMER1_CAPT_vect) // Interrupt on PB0
 {
   if(edge_rising)
   {
-    TCNT1 = 0; // Reset Timer1 counter
-    TCCR1B &= ~(1 << ICES1); //Change input capture to falling edge
-    TIFR1 |= (1 << ICF1); // Clear ICF1 flag
+    TCNT1 = 0;                // Reset Timer1 counter
+    TCCR1B &= ~(1 << ICES1);  // Change input capture to falling edge
+    TIFR1 |= (1 << ICF1);     // Clear ICF1 flag
     edge_rising = 0; 
+    overflow = 0;
   }
   else
   {
-    pulse_width = ICR1; // Capture the pulse width
-    TCCR1B |= (1 << ICES1); // Change input capture to rising edge 
-    TIFR1 |= (1 << ICF1); // Clear ICF1 flag
+    if(!overflow && (TCNT1 <= MAX_PULSE_WIDTH)) pulse_width = ICR1; // Capture the pulse width (47059 =~ 400 cm)
+    else pulse_width = MAX_PULSE_WIDTH_OVERFLOW; // Max distance of 255 cm exceeded (60000 = 510 cm) (value is temporary to help debug)
+    TCCR1B |= (1 << ICES1);   // Change input capture to rising edge 
+    TIFR1 |= (1 << ICF1);     // Clear ICF1 flag
     edge_rising = 1;
   }
-  // k++;
-  
+}
+
+ISR(TIMER1_OVF_vect) 
+{
+  if(!edge_rising) overflow++;
+  if(overflow > 100) overflow = 0;
 }
 
 //################################___________FUNCTIONS_____________############################################
@@ -59,7 +67,7 @@ ISR(TIMER1_CAPT_vect) // Interrupt on PB0
 // Checks for objects within a specified distance of the sensor. Returns true if a object is detected
 bool checkForObstacle(uint8_t sensor, uint8_t distance_cm)
 {
-  TriggerSensor(sensor);
+  triggerSensor(sensor);
   if(calculateDistance() <= distance_cm) return true; 
   else return false;
 }
@@ -67,33 +75,28 @@ bool checkForObstacle(uint8_t sensor, uint8_t distance_cm)
 // Returns distance from sensor to 
 uint16_t getDistance(uint8_t sensor)
 {
-  TriggerSensor(sensor); // Trigger the ultrasonic sensor
+  triggerSensor(sensor); // Trigger the ultrasonic sensor
   Serial.println(pulse_width);
   // Serial.println(k);
   return calculateDistance();
 }
 
-void TriggerSensor(uint8_t sensor)
+void triggerSensor(uint8_t sensor)
 {
-  // MUXState(sensor);
+  MUXState(sensor);
   
+  TIMSK1 |= (1 << TOIE1); // Enable timer overflow interupt
+
   // Send the trigger pusle 
-  DDRB |= (1 << Echo_Trig); // Output
-  PORTB &= ~(1 << Echo_Trig); // makes sure the trigger pin is low
+  PORTB &= ~(1 << Trig); // makes sure the trigger pin is low
   _delay_us(2); 
-  PORTB |= (1 << Echo_Trig); 
+  PORTB |= (1 << Trig); 
   _delay_us(10); // 10 microsecond delay to send out a 8 cycle ultrasonic burst
-  PORTB &= ~(1 << Echo_Trig); 
-  _delay_us(20);
-  DDRB &= ~(1 << Echo_Trig); // input
+  PORTB &= ~(1 << Trig); 
+  _delay_ms(70); // Wait for echo pulse to complete (sensor delay) (max high period = 70ms)
 
-  // PORTB &= ~(1 << Trig); // makes sure the trigger pin is low
-  // _delay_us(2); 
-  // PORTB |= (1 << Trig); 
-  // _delay_us(10); // 10 microsecond delay to send out a 8 cycle ultrasonic burst
-  // PORTB &= ~(1 << Trig); 
+  TIMSK1 &= ~(1 << TOIE1); // Disable timer overflow interupt
 
-  _delay_ms(40); // Wait for echo pulse to complete (sensor delay) (max high period = 38ms)
 }
 
 uint16_t calculateDistance()
@@ -107,11 +110,8 @@ void ultrasonicInit()
   // MUX control pins
   DDRB |= (1 << A_control) | (1 << B_control) | (1 << C_control);
   PORTB &= ~((1 << A_control) | (1 << B_control) | (1 << C_control));
-  // PORTB |= (1 << A_control) | (1 << B_control) | (1 << C_control);
-
-  // DDRB &= ~(1 << Echo); //  Configures the Echo pin to be an input
-  // DDRB |= (1 << Trig); //  Configures the Trig pin to be an output
-  DDRB |= (1 << Echo_Trig); //  Configures the Trig pin to be an output
+  DDRB &= ~(1 << Echo); //  Configures the Echo pin to be an input
+  DDRB |= (1 << Trig); //  Configures the Trig pin to be an output
   
   // Timer 1 (input capture unit)
   TCCR1A = 0; // Normal mode
@@ -119,11 +119,9 @@ void ultrasonicInit()
   TIMSK1 = 0; // Reset in case arduino.h fucked with something
   TCCR1C = 0; // Reset in case arduino.h fucked with something
   TCCR1B |= (1 << ICES1) | (1 << ICNC1); // Set input capture to rising edge And enables input noise cancelation
-  TIMSK1 |= (1 << ICIE1); // Inable input capture interrupt
+  TIMSK1 |= (1 << ICIE1); // Enable input capture interrupt
   TCCR1B |= (1 << CS11); // Start timer with prescaler of 8
   sei();
-
-  // PORTB |= (1 << A_control) | (1 << B_control) | (1 << C_control);
 }
 
 void MUXState(uint8_t sensor)
@@ -150,11 +148,3 @@ bool checkFrontSensors(uint8_t distance_cm)
   }
   return false; // No object detected
 }
-
-// case 1: PORTB = (1 << A) | ~(1 << B) | ~(1 << C);  break;
-//   case 2: PORTB = ~(1 << A) | (1 << B) | ~(1 << C);  break;
-//   case 3: PORTB = (1 << A) | (1 << B) | ~(1 << C);  break;
-//   case 4: PORTB = ~(1 << A) | ~(1 << B) | (1 << C);  break;
-//   case 5: PORTB = (1 << A) | ~(1 << B) | (1 << C);  break;
-//   case 6: PORTB = (1 << A) | (1 << B) | ~(1 << C);  break;
-//   case 7: PORTB = (1 << A) | (1 << B) | (1 << C);  break;
