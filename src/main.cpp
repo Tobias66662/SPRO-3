@@ -33,9 +33,9 @@ void setup()
   gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
   // Serial.begin(9600); // this is already in GPS_setup
 
-  // Motor::initialize();
-  // magnetometer = new Magnetometer();
-  // nav = Navigation(magnetometer);
+  Motor::initialize();
+  magnetometer = new Magnetometer();
+  nav = Navigation(magnetometer);
 
   flip_flag = 0;
   float lat_meters, long_meters, lat_diff_radians; // temporary variables used for calculating the difference in long and lat in meters, which will be used in calculating the number of points for the top and bottom line
@@ -56,8 +56,8 @@ void setup()
 
   n2 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / PATH_RESOLUTION; // number of array points for bottom line // number of array points for the bottom line
 
-  // left_motor.toggle(true);
-  // right_motor.toggle(true);
+  left_motor.toggle(true);
+  right_motor.toggle(true);
 }
 
 void loop()

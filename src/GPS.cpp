@@ -16,7 +16,7 @@
 // Connect the GPS RX (receive) pin to Arduino TX
 
 // you can change the pin numbers to match your wiring:
-SoftwareSerial mySerial(3, 4); // mySerial object is created to pass two parameters: rx and tx respectively.
+SoftwareSerial mySerial(4, 7); // mySerial object is created to pass two parameters: rx and tx respectively.
 Adafruit_GPS GPS(&mySerial);   // GPS object created using the Adafruit_GPS class
 //====================
 // Constants
@@ -122,10 +122,8 @@ void store_coordinates(void)
     if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
       return;                       // we can fail to parse a sentence in which case we should just wait for another
   }
-  Serial.println("print before fix check");
   if (GPS.fix)
   { // GPS.fix returns the fix status as true or false
-  Serial.println("WE GOT A FIX YAAAAAAAAAAAAAAAAAAAAAAY");
     lat_gps = GPS.latitude_fixed / 1.0E7;
 
     long_gps = GPS.longitude_fixed / 1.0E7;
@@ -135,7 +133,6 @@ void store_coordinates(void)
   else
   { // Satellites not detected! Location data cannot be retreived!
     standby_flag = 1;
-    Serial.println("NO FIX");
   }
 }
 
