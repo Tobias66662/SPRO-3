@@ -114,33 +114,34 @@ void store_coordinates(void)
 
   char c = GPS.read(); // storing the characters coming through the serial bus in a 'c' char.
 
-  if ((c) && (GPSECHO)) // this is underlined but probably not an issue...
+  if ((c) && (GPSECHO))
 
   // if a sentence is received, we can check the checksum, parse it...
   if (GPS.newNMEAreceived())
   {
-
     if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
       return;                       // we can fail to parse a sentence in which case we should just wait for another
   }
-
+  Serial.println("print before fix check");
   if (GPS.fix)
-  { // GPS.fix returns the fix status, where 0 means no fix and 1 means there is a fix.
+  { // GPS.fix returns the fix status as true or false
+  Serial.println("WE GOT A FIX YAAAAAAAAAAAAAAAAAAAAAAY");
     lat_gps = GPS.latitude_fixed / 1.0E7;
-    // Serial.print(GPS.lat); // returns N/S for North/South (uncomment if needed)
+
     long_gps = GPS.longitude_fixed / 1.0E7;
-    // Serial.println(GPS.lon); // returns E/W for East/West (uncomment if needed)
+  
     standby_flag = 0;
   }
   else
   { // Satellites not detected! Location data cannot be retreived!
     standby_flag = 1;
+    Serial.println("NO FIX");
   }
 }
 
 void boundary_check(void)
 { // check if the vehicle is out of bounds
-
+  store_coordinates();
   // TOP BOUNDARY
   if (lat_gps > (m1 * long_gps + c1))
   { // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line

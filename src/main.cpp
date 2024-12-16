@@ -9,13 +9,11 @@
 #include "current.h"
 #include "navigation.h"
 #include "motor.h"
+#include "tests.h"
 
 #define PATH_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
 
 // Globals
-extern Magnetometer *magnetometer;
-
-Navigation nav;
 
 float long_diff1, lat_diff1, long_diff2, lat_diff2; // temporary variables used for calculating the difference in longitude and latitude, which are then converted in meters
 
@@ -32,11 +30,13 @@ void i1_i2_init(int *i1, int *i2);
 
 void setup()
 {
-  Serial.begin(9600);
+  GPS_setup();                   // GPS intialiser (with a 1 sec delay to give the gps some time to execute all commands)
+  gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
+  // Serial.begin(9600); // this is already in GPS_setup
 
-  Motor::initialize();
-  magnetometer = new Magnetometer();
-  nav = Navigation(magnetometer);
+  //Motor::initialize();
+  //magnetometer = new Magnetometer();
+  //nav = Navigation(magnetometer);
 
   flip_flag = 0;
   float lat_meters, long_meters, lat_diff_radians; // temporary variables used for calculating the difference in long and lat in meters, which will be used in calculating the number of points for the top and bottom line
@@ -57,63 +57,15 @@ void setup()
 
   n2 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / PATH_RESOLUTION; // number of array points for bottom line // number of array points for the bottom line
 
-  left_motor.toggle(true);
-  right_motor.toggle(true);
-
-  GPS_setup();                   // GPS intialiser (with a 1 sec delay to give the gps some time to execute all commands)
-  gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
-}
-
-bool test_straight() // TEST ========== IGNORE
-{
-  static char i = 0;
-  if (i == 0)
-  {
-    nav.store_target();
-    i++;
-  }
-  nav.motor_control(0, 0, 0, true);
-  return true;
-}
-
-bool test_motors()
-{
-  for(int i=200;i<255;i+=10){
-    Serial.print("Duty cycle:");
-    Serial.println(i);
-    left_motor.set_speed(i);
-    right_motor.set_speed(i);
-    left_motor.set_direction(1);
-    right_motor.set_direction(1);
-    _delay_ms(1000);
-  }
-  return true;
-}
-
-bool test_turn()  // TEST ========== IGNORE
-{
-  float angle = magnetometer->get_angle();
-  for (size_t i = 0; i < 2; i++)
-  {
-    nav.turn(180);
-  }
-
-  left_motor.toggle(0);
-  right_motor.toggle(0);
-  return angle == magnetometer->get_angle();
-}
-
-bool test_magneto() // TEST ========== IGNORE
-{
-  Serial.println(magnetometer->get_angle());
-  return true;
+  // left_motor.toggle(true);
+  // right_motor.toggle(true);
 }
 
 void loop()
 {
   // test_magneto();
   // test_motors();
-  test_turn();
+  // test_turn();
   // test_straight();
 
   phase_one();
@@ -149,9 +101,6 @@ void phase_one(void)
     // getting the next point if it's not in initialize otherwise call find_closest
     i1_i2_init(&i1, &i2);
 
-  Serial.println("i1, i2:");
-  Serial.println(i1, i2);
-
     get_next_point(&i1, &i2); // !!THIS NEEDS TO BE CALLED BEFORE FLIPPING THE FLAGS!!
 
     boundary_check(); // store the first coordinates
@@ -167,9 +116,6 @@ void phase_one(void)
       flip_flag = 0;
     }
 
-    Serial.print("flip flag:");
-    Serial.println(flip_flag);
-
     // DISABLED
     // check_obstacles(&i, i1, i2); // !!THIS NEEDS TO BE CALLED AFTER FLIPPING THE FLAG!!
     boundary_check();
@@ -178,7 +124,6 @@ void phase_one(void)
     nav.turn(angle_diff);
     nav.motor_control(&i, i1, i2, true); // remove these ugly placeholders as a temporary
   }
-  Serial.print("Exit while loop. Ready for Phase two.");
 } // end of phase_one()
 
 void phase_two(void)
