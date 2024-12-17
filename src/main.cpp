@@ -34,6 +34,8 @@ void setup()
   // Serial.begin(9600); // this is already in GPS_setup
 
   Motor::initialize();
+  ADC_Init();
+
   magnetometer = new Magnetometer();
   nav = Navigation(magnetometer);
 
@@ -108,7 +110,7 @@ void phase_one(void)
     flip_flag = !flip_flag; // flip the flip flag 1/0
 
     nav.turn(get_angle());
-    nav.motor_control(&i, i1, i2, true); // remove these ugly placeholders as a temporary
+    nav.straight(&i, i1, i2); // remove these ugly placeholders as a temporary
   }
 } // end of phase_one()
 

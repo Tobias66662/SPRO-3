@@ -10,21 +10,21 @@ bool test_straight() // TEST ========== IGNORE
     nav.store_target();
     i++;
   }
-  nav.motor_control(0, 0, 0, true);
+  nav.straight(0, 0, 0);
   return true;
 }
 
 bool test_motors()
 {
-    left_motor.set_speed(255);
-    right_motor.set_speed(255);
-    left_motor.set_direction(1);
-    right_motor.set_direction(1);
-    _delay_ms(1000);
+  left_motor.set_speed(255);
+  right_motor.set_speed(255);
+  left_motor.set_direction(1);
+  right_motor.set_direction(1);
+  _delay_ms(1000);
   return true;
 }
 
-bool test_turn()  // TEST ========== IGNORE
+bool test_turn() // TEST ========== IGNORE
 {
   float angle = magnetometer->get_angle();
   for (size_t i = 0; i < 2; i++)
