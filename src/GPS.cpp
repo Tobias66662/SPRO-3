@@ -58,10 +58,9 @@ float lat_gps = 0;
 float long_gps = 0;
 
 point boundaries[] = {point(54.912155631362886, 9.779128545696924),
-point(54.912202342965166, 9.779243666022944),
-point(54.912142007135344, 9.779319848591634),
-point(54.912116704986275, 9.779199649427701) };
-
+                      point(54.912202342965166, 9.779243666022944),
+                      point(54.912142007135344, 9.779319848591634),
+                      point(54.912116704986275, 9.779199649427701)};
 
 //====================
 // Function Definitions
@@ -74,11 +73,22 @@ void GPS_setup(void);
 //====================
 // Function Prototypes
 //====================
-float distance_points(point p1, point p2){
-    float dist_lon = abs(p1.lon - p2.lon);
-    float dist_lat = abs(p1.lat - p2.lat);
 
-    return sqrt(dist_lon * dist_lon + dist_lat * dist_lat);
+// checking if the target is to the left from the vehicle
+bool is_target_left()
+{
+  store_coordinates();
+
+  // the opposite relation gives true if the orientation is flipped
+  return (target_point_long > long_gps && target_point_lat > lat_gps) || (target_point_long < long_gps && target_point_lat < lat_gps);
+}
+
+float distance_points(point p1, point p2)
+{
+  float dist_lon = abs(p1.lon - p2.lon);
+  float dist_lat = abs(p1.lat - p2.lat);
+
+  return sqrt(dist_lon * dist_lon + dist_lat * dist_lat);
 }
 
 uint8_t find_closest()
@@ -99,17 +109,19 @@ uint8_t find_closest()
   return closest;
 }
 
-float remaining_distance(){
+float remaining_distance()
+{
+  store_coordinates();
   float rem_dis_meters; // remaining distance between the two points (in meters)
 
-  float lat_diff = target_point_lat - lat_gps;                               // Difference in lat (in degrees)    
-  float lat_diff_radians = (lat_diff * PI) / 180;                            // Difference in lat (in rads)
-  float long_diff = target_point_long - long_gps;                            // Difference in long (in degrees)
+  float lat_diff = target_point_lat - lat_gps;    // Difference in lat (in degrees)
+  float lat_diff_radians = (lat_diff * PI) / 180; // Difference in lat (in rads)
+  float long_diff = target_point_long - long_gps; // Difference in long (in degrees)
 
-  float lat_diff_meters = lat_diff * 111000;                                            // Difference in lat (in meters)   
-  float long_diff_meters = ((40075 * cos(lat_diff_radians) * 1000) / 360) * long_diff;  // Difference in long (in meters)
+  float lat_diff_meters = lat_diff * 111000;                                           // Difference in lat (in meters)
+  float long_diff_meters = ((40075 * cos(lat_diff_radians) * 1000) / 360) * long_diff; // Difference in long (in meters)
 
-  rem_dis_meters = sqrt(lat_diff_meters*lat_diff_meters + long_diff_meters*long_diff_meters); // pythagorean theorem to calculate distance between the target point and current vehicle position
+  rem_dis_meters = sqrt(lat_diff_meters * lat_diff_meters + long_diff_meters * long_diff_meters); // pythagorean theorem to calculate distance between the target point and current vehicle position
   return rem_dis_meters;
 }
 
@@ -122,7 +134,7 @@ void GPS_setup(void)
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
 
   // Set the update rate
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); // 1 Hz update rate (can be change for up to 10Hz)
+  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_10HZ); // 10 Hz update rate (can be change for up to 10Hz)
 
   // Request updates on antenna status, comment out to keep quiet
   GPS.sendCommand(PGCMD_ANTENNA);
@@ -251,10 +263,10 @@ void gradient_and_intercept_calc()
   b3 = boundaries[2].lat - boundaries[3].lat;
   b4 = boundaries[3].lat - boundaries[0].lat;
   // Calculating the gradient m for each line
-  m1 = b1 / a1; // gradient of our top line      
-  m2 = b2 / a2; // gradient of our right line     
-  m3 = b3 / a3; // gradient of our bottom line   
-  m4 = b4 / a4; // gradient of our left line      
+  m1 = b1 / a1; // gradient of our top line
+  m2 = b2 / a2; // gradient of our right line
+  m3 = b3 / a3; // gradient of our bottom line
+  m4 = b4 / a4; // gradient of our left line
 
   // Calculating the intercept c for each line
   c1 = boundaries[0].lat - m1 * boundaries[0].lon; // intercept of our top line // NOTE: LONG AND LAT MIGHT NEED TO BE SWAPPED
