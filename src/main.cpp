@@ -118,7 +118,7 @@ void phase_one(void)
 
     get_next_point(&i1, &i2); // !!THIS NEEDS TO BE CALLED BEFORE FLIPPING THE FLAGS!!
 
-    flip_flag = !flip_flag;
+    flip_flag = !flip_flag; // flip the flip flag 1/0
 
     nav.turn(get_angle());
     nav.straight(&i, i1, i2); // remove these ugly placeholders as a temporary

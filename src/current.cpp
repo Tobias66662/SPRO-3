@@ -9,12 +9,15 @@
 #define ACS712_OFFSET_Voltage 2.5 // Voltage at 0A (x05B varient)
 
 void ADC_Init();
-static uint16_t readADC();
+uint16_t readADC( uint8_t ADC_channel); 
 float get_current();
 
-static uint16_t readADC()
+uint16_t readADC(uint8_t ADC_channel) 
 {
-  // Starts a conversion
+  ADMUX &= 0xF0; // Clears the input channel selections, but keep voltage selection reference
+  ADMUX |= ADC_channel; // Sets what pin the voltage is going to be read from
+
+  // Starts a conversion 
   ADCSRA |= (1 << ADSC);
 
   // Waits for the convertion to complete, since ADSC will be set to 0 when the conversion is complete
@@ -33,7 +36,7 @@ void ADC_Init()
 
 float get_current()
 {
-  float ADC_voltage = ((float)readADC() * ADC_REFERENCE_VOLTAGE) / ADC_RESOLUTION;
+  float ADC_voltage = ((float)readADC(ADC7)*ADC_REFERENCE_VOLTAGE)/ADC_RESOLUTION;
   float current = (ADC_voltage - ACS712_OFFSET_Voltage) / ACS712_SENSITIVITY;
 
   return current;
@@ -41,6 +44,6 @@ float get_current()
 
 bool voltage_reached(float voltage)
 {
-  float ADC_voltage = ((float)readADC() * ADC_REFERENCE_VOLTAGE) / ADC_RESOLUTION;
+  float ADC_voltage = ((float)readADC(ADC6) * ADC_REFERENCE_VOLTAGE) / ADC_RESOLUTION;
   return ADC_voltage >= voltage;
 }

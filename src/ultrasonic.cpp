@@ -3,7 +3,9 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <Arduino.h>
+#include <math.h>
 
+#include "current.h"
 #include "ultrasonic.h"
 
 //---------CONSTANTS------------
@@ -14,6 +16,14 @@
 #define A_control PB1
 #define B_control PB2
 #define C_control PB4
+#define B 4791.842
+#define A_1 0.00335
+#define B_1 0.000257
+#define C_1 0.00000262
+#define D_1 0.0000000638
+#define R_25 10000 // NTC resistance at 25 celcius
+#define R_air 287.05 // Gas constant (ideal gas)
+#define K_air 1.4 // Specific heat ratio
 
 #define Echo PB0 // Reflection pin
 #define Trig PB3 // Trigger pin 
@@ -23,6 +33,7 @@
 volatile uint16_t pulse_width = 0;
 volatile uint8_t edge_rising = 1;
 volatile uint8_t overflow = 0; // timer overflow counter
+float velocity_sound = 0;
 
 // ################################________FUNCTION_PRECALLS________############################################
 
@@ -33,6 +44,7 @@ uint16_t getDistance(uint8_t sensor);
 bool checkForObstacle(uint8_t sensor, uint8_t distance_cm);
 void MUXState(uint8_t sensor);
 bool checkFrontSensors(uint8_t distance_cm);
+void CaluclateSpeedOfSound();
 
 // ################################___________INTERRUPTS_____________############################################
 
@@ -102,7 +114,7 @@ void triggerSensor(uint8_t sensor)
 uint16_t calculateDistance()
 {
   // Calculate and return distance in cm
-  return (speed * (pulse_width * 0.0005)) / 2;
+  return (velocity_sound * (pulse_width * 0.0005)) / 2;
 }
 
 void ultrasonicInit()
@@ -122,6 +134,8 @@ void ultrasonicInit()
   TIMSK1 |= (1 << ICIE1); // Enable input capture interrupt
   TCCR1B |= (1 << CS11); // Start timer with prescaler of 8
   sei();
+
+  CaluclateSpeedOfSound();
 }
 
 void MUXState(uint8_t sensor)
@@ -164,4 +178,14 @@ bool checkFrontSensors(uint8_t distance_cm)
       return true; // Object detected
   }
   return false; // No object detected
+}
+
+void CaluclateSpeedOfSound()
+{
+  float R_NTC = (107113.54 / (readADC(ADC0) + 2.4187847)) - 10833.151; // Resistance of reading of NTC thermistor
+
+  float log_value = R_NTC = log(R_NTC/(float)R_25);
+  float T_kelvin = pow((double)(A1 + B1 * log_value + C_1 * pow(log_value, 2) + D_1 * pow(log_value, 3)), -1); // Temperature in kelvin
+
+  velocity_sound = sqrt(K_air*R_air*T_kelvin); // Calculatd the veleocity of sound in air
 }

@@ -9,8 +9,8 @@
 // Create motor objects
 Motor left_motor(1);  // Left track motor
 Motor right_motor(2); // Right track motor
-Motor brush_motor(3); // Brush motor
-Motor servo_motor(4); // Servo motor
+Motor servo_motor(3); // Servo motor
+Motor brush_motor(4); // Brush motor
 
 // Initialize Timer0 and Timer2 for PWM
 void Motor::initialize()
@@ -55,10 +55,10 @@ void Motor::set_speed(uint8_t duty_cycle)
     break; // Right track motor
   case 3:
     OCR2A = duty_cycle;
-    break; // Brush motor
+    break; // Servo motor
   case 4:
     OCR2B = duty_cycle;
-    break; // Servo motor
+    break; // Brush motor
   }
 }
 
@@ -79,10 +79,10 @@ void Motor::toggle(bool state)
       break; // Enable OC0B (right motor)
     case 3:
       TCCR2A |= (1 << COM2A1);
-      break; // Enable OC2A (brush motor)
+      break; // Enable OC2A (Servo motor)
     case 4:
       TCCR2A |= (1 << COM2B1);
-      break; // Enable OC2B (servo motor)
+      break; // Enable OC2B (Brush motor)
     }
   }
   else
@@ -97,10 +97,10 @@ void Motor::toggle(bool state)
       break; // Disable OC0B (right motor)
     case 3:
       TCCR2A &= ~(1 << COM2A1);
-      break; // Disable OC2A (brush motor)
+      break; // Disable OC2A (Servo motor)
     case 4:
       TCCR2A &= ~(1 << COM2B1);
-      break; // Disable OC2B (servo motor)
+      break; // Disable OC2B (Brush motor)
     }
   }
 }
