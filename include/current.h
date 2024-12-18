@@ -1,5 +1,5 @@
-#ifndef _CURRENT_H_ 
-#define _CURRENT_H_ 
+#ifndef _CURRENT_H_
+#define _CURRENT_H_
 
 #define ADC0 0 // NTC thermistor
 #define ADC6 6 // Gate sensor
@@ -9,6 +9,6 @@ void ADC_Init();
 float get_current();
 uint16_t readADC(uint8_t ADC_channel);
 bool voltage_reached(float);
-
+float get_voltage_gate();
 
 #endif

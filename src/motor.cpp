@@ -9,8 +9,8 @@
 // Create motor objects
 Motor left_motor(1);  // Left track motor
 Motor right_motor(2); // Right track motor
-Motor servo_motor(3); // Servo motor
 Motor brush_motor(4); // Brush motor
+Motor servo_motor(3); // Servo motor
 
 // Initialize Timer0 and Timer2 for PWM
 void Motor::initialize()
@@ -39,7 +39,7 @@ void Motor::initialize()
   TCCR2A = 0x00;                         // Reset in case arduino.h fucked with something
   TCCR2B = 0x00;                         // Reset in case arduino.h fucked with something
   TCCR2A |= (1 << WGM20) | (1 << WGM21); // Fast PWM mode
-  TCCR2B |= (1 << CS22);                 // 16 bit prescaler
+  TCCR2B |= (1 << CS21);                 // 8 bit prescaler
 }
 
 // Set PWM duty cycle
@@ -134,5 +134,25 @@ void Motor::set_direction(uint8_t direction)
       PORTC &= ~(1 << PC2);
     }
     break;
+  }
+}
+
+void Motor::operate_servo(bool direction)
+{
+  int duration = direction ? 22 : 25;
+  for (int i = 0; i < duration; i++)
+  {
+    if (direction)
+    {
+      PORTB |= 1 << PINB3;
+      _delay_us(1700);
+    }
+    else
+    {
+      PORTB |= 1 << PINB3;
+      _delay_us(1300);
+    }
+    PORTB &= ~(1 << PINB3);
+    _delay_ms(20);
   }
 }

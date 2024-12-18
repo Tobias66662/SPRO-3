@@ -11,6 +11,7 @@ public:
   void set_speed(uint8_t duty_cycle);
   void toggle(bool state);
   void set_direction(uint8_t direction);
+  void operate_servo(bool direction); // 1 open - 0 close
 
 private:
   const uint8_t motor_id;

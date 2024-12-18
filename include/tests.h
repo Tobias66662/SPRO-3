@@ -7,7 +7,6 @@
 #include "magnetometer.h"
 #include "direction.h"
 #include "gps.h"
-#include "motor.h"
 #include "current.h"
 #include "navigation.h"
 #include "motor.h"
@@ -20,5 +19,6 @@ bool test_straight();
 bool test_motors();
 bool test_turn();
 bool test_magneto();
+void test_gate();
 
 #endif // TESTS

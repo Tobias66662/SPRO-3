@@ -36,6 +36,7 @@ void setup()
   // Serial.begin(9600); // this is already in GPS_setup
 
   Motor::initialize();
+  ultrasonicInit();
   ADC_Init();
 
   magnetometer = new Magnetometer();
@@ -63,24 +64,19 @@ void setup()
   left_motor.toggle(true);
   right_motor.toggle(true);
   brush_motor.toggle(1);
+  // test_motors();
+  // test_turn();
+  // test_straight();
 }
 
 void loop()
 {
-  test_magneto();
-  brush_motor.set_speed(0);
-
-  _delay_ms(1000);
-
-  brush_motor.set_speed(255);
-
-  _delay_ms(1000);
-  // test_motors();
-  // test_turn();
-  // test_straight();
-
   // phase_one();
   // phase_two();
+
+  // test_magneto();
+  test_gate();
+  _delay_ms(100);
 }
 
 void check_gps()
