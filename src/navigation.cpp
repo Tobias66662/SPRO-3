@@ -4,16 +4,29 @@
 #include "motor.h"
 #include "ultrasonic.h"
 #include "direction.h"
+#include "current.h"
 
-#define CTRL_SIG_MAX 255
-#define CTRL_SIG_MIN 220
-#define ATTEMPT_ANGLE 90
+#define CTRL_SIG_MAX 255   // max of value of 8 bits register
+#define CTRL_SIG_MIN 220   // min observed value for not stalling motors
+#define ATTEMPT_ANGLE 90   // attempt for avoid obstacle
+#define BIN_TRIGGERED 5    // measured value
+#define DISTANCE_REACHED 2 // meters of closeness when we consider the target hit
+#define ANGLE_REACHED 5    // degrees of closeness
+#define COOL_DOWN 750      // cool down for the control loop, time out for the adjustments to make effect
+#define TURNING_CIRCLE 20  // space necessary for turning around
+#define FRONT_COLLISION 10 // check distance in advance
+
+// PID Control loop variables
+#define KP 1
+#define KD 0
+#define KI 0
 
 // declared in main
 int8_t obstacle_array[100]; // stores the i1 and i2 values when the obstacle_mode_f switches to 1 and stores them again to the next array elements when it switches back to 0
 
 // global
 bool flip_flag; // flag that flips to switch between targeting a point on the top line and the bottom line (check main to see when it's flipped)
+bool full_flag; // flip when trash is full
 
 bool obstacle_mode_f = 0;       // tells if vehicle is in obstacle mode; obstacle mode starts when the vehicle sees an object for the first time and ends when it can again reach from top line to bottom line.
 bool bottom_area_blocked_f = 0; // tells if the top or bottom area is left uncleaned
@@ -27,21 +40,6 @@ Navigation::Navigation(Magnetometer *magnetometer)
 void Navigation::set_object_avoidance(bool object_avoidance_mode)
 {
     this->object_avoidance_mode = object_avoidance_mode;
-}
-
-// state of the vehicle so it knows which direction it should initiate turning when section is over
-bool Navigation::heading_forward(bool turn)
-{
-    if (is_clockwise)
-    {
-        is_clockwise = !turn;
-    }
-    else
-    {
-        is_clockwise = turn;
-    }
-
-    return is_clockwise;
 }
 
 /**
@@ -98,29 +96,16 @@ float Navigation::get_offseted_angle() const
     return res;
 }
 
-void Navigation::turn(float angle)
-{
-    store_target(angle);
-    _delay_ms(3000);
-    motor_control(0, 0, 0, false);
-}
-
-/**
- * aligns to @param is_north then targets the end of the section.
- * @param target has max absolute value 180 and @param is_clockwise determines the first turn to be taken.
- */
-void Navigation::align_device(bool is_north, bool is_clockwise, float target)
-{
-    this->is_clockwise = is_clockwise;
-    unsigned short max_misorientation = is_north == magnetometer->is_north() ? 180 : 360;
-    float angle = magnetometer->get_angle();
-    turn(max_misorientation - angle + target);
-}
-
 bool is_border_hit()
 {
     boundary_check();
-    return topline_f || bottomline_f;
+
+    if (!flip_flag)
+    {
+        return topline_f;
+    }
+    else
+        return bottomline_f;
 }
 
 bool check_obstacles(int8_t *i, int i1, int i2)
@@ -173,50 +158,67 @@ bool check_obstacles(int8_t *i, int i1, int i2)
     return false;
 }
 
-void Navigation::avoid_obsticales()
+void Navigation::avoid_obstacles()
 {
-    char relevant_sensor = check_direction() ? LEFT_SENSOR : RIGHT_SENSOR;
+    if (!checkFrontSensors(FRONT_COLLISION))
+        return;
+
+    Serial.println("Object detected");
+
+    char relevant_sensor = !is_target_left() ? LEFT_SENSOR : RIGHT_SENSOR;
+    if (checkForObstacle((relevant_sensor == LEFT_SENSOR ? RIGHT_SENSOR : LEFT_SENSOR), TURNING_CIRCLE))
+    {
+        Serial.println("Vehicle stuck");
+        return;
+    }
+
     int8_t attempt = ATTEMPT_ANGLE * (relevant_sensor == LEFT_SENSOR ? 1 : -1);
+    turn(attempt);
 
-    // start recursion by turns
-    if (checkFrontSensors(5))
+    // go forward, if detained continue recursion otherwise undo
+    while (!checkFrontSensors(FRONT_COLLISION) || checkForObstacle(relevant_sensor, TURNING_CIRCLE))
     {
-        Serial.println("Object detected");
+        left_motor.set_direction(1);
+        right_motor.set_direction(1);
 
-        if (checkForObstacle((relevant_sensor == LEFT_SENSOR ? RIGHT_SENSOR : LEFT_SENSOR), 10))
-        {
-            Serial.println("Vehicle stuck");
-        }
-        else
-        {
-            turn(attempt);
-        }
+        left_motor.set_speed(200);
+        right_motor.set_speed(200);
     }
-    else
+    left_motor.set_speed(0);
+    right_motor.set_speed(0);
+
+    if (checkFrontSensors(FRONT_COLLISION))
     {
-        // go forward, if detained continue recursion otherwise undo
-        while (!checkFrontSensors(5) && checkForObstacle(relevant_sensor, 10))
-        {
-            left_motor.set_direction(1);
-            right_motor.set_direction(1);
-
-            left_motor.set_speed(200);
-            right_motor.set_speed(200);
-        }
-        left_motor.set_speed(0);
-        right_motor.set_speed(0);
-
-        if (checkFrontSensors(5))
-        {
-            avoid_obsticales();
-        }
-        else
-        {
-            turn(attempt * -1);
-        }
+        avoid_obstacles();
     }
+
+    turn(attempt * -1);
 }
 
+float Navigation::PID_control(int *prevT, int *eintegral, int *eprev)
+{
+    long currT = micros();
+    float deltaT = ((float)(currT - *prevT)) / (1.0e6);
+    *prevT = currT;
+    // float pos = magnetometer->get_angle();
+
+    // error
+    int e = abs(get_offseted_angle()); // pos - target;
+
+    // derivative
+    float dedt = (e - *eprev) / (deltaT);
+
+    // integral
+    *eintegral = *eintegral + e * deltaT;
+
+    // control signal
+    float u = KP * e + KD * dedt + KI * *eintegral;
+
+    // store previous error
+    *eprev = e;
+
+    return u;
+}
 // totally disgusting sin against humanity
 /**
  * @param is_straight gives if it compensates straight line
@@ -224,40 +226,82 @@ void Navigation::avoid_obsticales()
  * @param peak is 255 by default
  * proportional mode for straight vs linear for turn?
  */
-void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight)
+void Navigation::straight(int8_t *i, int i1, int i2)
 {
-    unsigned char peak = UINT8_MAX;
     int prevT = 0;
     int eintegral = 0;
     int eprev = 0;
-
-    float kp = 1;
-    float kd = 0;
-    float ki = 0;
-
     do
     {
-        long currT = micros();
-        float deltaT = ((float)(currT - prevT)) / (1.0e6);
-        prevT = currT;
-        // float pos = magnetometer->get_angle();
+        float u = PID_control(&prevT, &eintegral, &eprev);
 
-        // error
-        int e = get_offseted_angle(); // pos - target;
-        bool left = e >= 0;
-        e = abs(e);
+        float power = abs(u);
+        if (power > CTRL_SIG_MAX)
+        {
+            power = CTRL_SIG_MAX;
+        }
+        else if (UINT8_MAX - power < CTRL_SIG_MIN)
+        {
+            power = UINT8_MAX;
+        }
 
-        // derivative
-        float dedt = (e - eprev) / (deltaT);
+        uint8_t powerLeft, powerRight;
+        powerLeft = powerRight = UINT8_MAX;
+        if (get_offseted_angle())
+        {
+            powerRight -= power; // if error 0 then decrease by zero
+        }
+        else
+            powerLeft -= power;
 
-        // integral
-        eintegral = eintegral + e * deltaT;
+        left_motor.set_direction(1);
+        right_motor.set_direction(1);
 
-        // control signal
-        float u = kp * e + kd * dedt + ki * eintegral;
+        left_motor.set_speed(powerLeft);
+        right_motor.set_speed(powerRight);
 
-        // store previous error
-        eprev = e;
+        Serial.print(powerLeft);
+        Serial.print(" - ");
+        Serial.println(powerRight);
+
+        if (false && object_avoidance_mode)
+        {
+            brush_motor.toggle(0);
+            // target stays, object will be avoided
+            float temp = target;
+            avoid_obstacles();
+            target = temp;
+        }
+        else
+        {
+            brush_motor.toggle(1);
+
+            // this case the obstacle will not be avoided, rather getting new target
+            if (false && check_obstacles(i, i1, i2))
+                break;
+
+            if (false && voltage_reached(BIN_TRIGGERED)) // todo needs to be adjusted
+            {
+                full_flag = true;
+                break;
+            }
+        }
+
+        _delay_ms(COOL_DOWN);
+    } while ((object_avoidance_mode && remaining_distance() > DISTANCE_REACHED) || (!object_avoidance_mode && !is_border_hit())); // todo borderlines
+}
+
+void Navigation::turn(float angle)
+{
+    store_target(angle);
+    _delay_ms(3000);
+
+    int prevT = 0;
+    int eintegral = 0;
+    int eprev = 0;
+    do
+    {
+        float u = PID_control(&prevT, &eintegral, &eprev);
 
         float power = abs(u);
         if (power > CTRL_SIG_MAX)
@@ -265,76 +309,32 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight)
             power = CTRL_SIG_MAX;
         }
         // avoid stalling the motors
-        else if (!is_straight && power < CTRL_SIG_MIN)
+        else if (power < CTRL_SIG_MIN)
         {
             power = CTRL_SIG_MIN;
         }
-        else if (is_straight && peak - power < CTRL_SIG_MIN)
-        {
-            power = peak;
-        }
 
-        if (is_straight)
+        if (get_offseted_angle())
         {
-            uint8_t powerLeft = peak, powerRight = peak;
-            if (left)
-            {
-                powerRight -= power; // if error 0 then decrease by zero
-            }
-            else
-                powerLeft -= power;
-
-            left_motor.set_direction(1);
+            left_motor.set_direction(0);
             right_motor.set_direction(1);
-
-            left_motor.set_speed(powerLeft);
-            right_motor.set_speed(powerRight);
-
-            Serial.print(powerLeft);
-            Serial.print(" - ");
-            Serial.println(powerRight);
+            Serial.println('L');
         }
         else
         {
-            if (left)
-            {
-                left_motor.set_direction(0);
-                right_motor.set_direction(1);
-            }
-            else
-            {
-                left_motor.set_direction(1);
-                right_motor.set_direction(0);
-            }
-
-            left_motor.set_speed(power);
-            right_motor.set_speed(power);
-
-            Serial.print(power);
-            Serial.print(" - ");
-            Serial.println(left ? 'L' : 'R');
+            left_motor.set_direction(1);
+            right_motor.set_direction(0);
+            Serial.println('R');
         }
 
-        // disabled branch
-        if (false && is_straight)
-        {
-            if (object_avoidance_mode)
-            {
-                // target stays, object will be avoided
-                float temp = target;
-                avoid_obsticales();
-                target = temp;
-            }
-            else
-            {
-                // this case the obstacle will not be avoided, rather getting new target
-                if (check_obstacles(i, i1, i2))
-                    break;
-            }
-        }
+        left_motor.set_speed(power);
+        right_motor.set_speed(power);
 
-        _delay_ms(750);
-    } while ((is_straight && !is_border_hit()) || (!is_straight && eprev > 5));
+        Serial.print(" - ");
+        Serial.println(power);
+
+        _delay_ms(COOL_DOWN);
+    } while (eprev > ANGLE_REACHED);
 }
 
 // offseted angle pointing to the target
@@ -365,4 +365,31 @@ void Navigation::motor_control(int8_t *i, int i1, int i2, bool is_straight)
 //     float result = (new_clockwise == clockwise ? 1 : -1) * new_degrees;
 //     // Serial.print("Opt. result: "); Serial.println(result);
 //     return result;
+// }
+
+// state of the vehicle so it knows which direction it should initiate turning when section is over
+// bool Navigation::heading_forward(bool turn)
+// {
+//     if (is_clockwise)
+//     {
+//         is_clockwise = !turn;
+//     }
+//     else
+//     {
+//         is_clockwise = turn;
+//     }
+
+//     return is_clockwise;
+// }
+
+/**
+ * aligns to @param is_north then targets the end of the section.
+ * @param target has max absolute value 180 and @param is_clockwise determines the first turn to be taken.
+ */
+// void Navigation::align_device(bool is_north, bool is_clockwise, float target)
+// {
+//     this->is_clockwise = is_clockwise;
+//     unsigned short max_misorientation = is_north == magnetometer->is_north() ? 180 : 360;
+//     float angle = magnetometer->get_angle();
+//     turn(max_misorientation - angle + target);
 // }

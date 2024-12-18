@@ -7,6 +7,7 @@
 #include "magnetometer.h"
 #include "gps.h"
 #include "direction.h"
+#include "tests.h"
 
 int8_t angle_diff = 0; // variable returning the angle between the vector pointing  to the target point and the vector facing the same direction as the vehicle (passed to PD control)
 bool direction_f;      // flag returning which direction the vehicle should turn to face a point of interest (1 represents left and 0 represents right)
@@ -49,7 +50,7 @@ bool check_direction(void)
     return direction_f;
 }
 
-int8_t check_angle(void)
+int8_t get_angle(void)
 {
     uint8_t m1_angle_deg = magnetometer->get_angle(); // m1 angle is given by the azimuth (0-360, where North is 0)
 

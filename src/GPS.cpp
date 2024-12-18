@@ -57,6 +57,11 @@ int n2 = 0; // Array size for bottom line
 float lat_gps = 0;
 float long_gps = 0;
 
+point boundaries[] = {point(54.912155631362886, 9.779128545696924),
+                      point(54.912202342965166, 9.779243666022944),
+                      point(54.912142007135344, 9.779319848591634),
+                      point(54.912116704986275, 9.779199649427701)};
+
 //====================
 // Function Definitions
 //====================
@@ -69,25 +74,55 @@ void GPS_setup(void);
 // Function Prototypes
 //====================
 
+// checking if the target is to the left from the vehicle
+bool is_target_left()
+{
+  store_coordinates();
+
+  // the opposite relation gives true if the orientation is flipped
+  return (target_point_long > long_gps && target_point_lat > lat_gps) || (target_point_long < long_gps && target_point_lat < lat_gps);
+}
+
+float distance_points(point p1, point p2)
+{
+  float dist_lon = abs(p1.lon - p2.lon);
+  float dist_lat = abs(p1.lat - p2.lat);
+
+  return sqrt(dist_lon * dist_lon + dist_lat * dist_lat);
+}
+
 uint8_t find_closest()
 {
   store_coordinates();
 
   uint8_t closest;
   float distance = INFINITY;
-  for (size_t i = 1; i < 5; i++)
+  for (size_t i = 0; i < 4; i++)
   {
-    float dist_x = abs(long_gps - LONG1);
-    float dist_y = abs(lat_gps - LAT1);
-
-    if (distance > sqrt(dist_x * dist_x + dist_y * dist_y))
+    if (distance < distance_points(point(lat_gps, long_gps), boundaries[i]))
     {
-      distance = sqrt(dist_x * dist_x + dist_y * dist_y);
+      distance = distance_points(point(lat_gps, long_gps), boundaries[i]);
       closest = i;
     }
   }
-  Serial.println("Infinity works");
+
   return closest;
+}
+
+float remaining_distance()
+{
+  store_coordinates();
+  float rem_dis_meters; // remaining distance between the two points (in meters)
+
+  float lat_diff = target_point_lat - lat_gps;    // Difference in lat (in degrees)
+  float lat_diff_radians = (lat_diff * PI) / 180; // Difference in lat (in rads)
+  float long_diff = target_point_long - long_gps; // Difference in long (in degrees)
+
+  float lat_diff_meters = lat_diff * 111000;                                           // Difference in lat (in meters)
+  float long_diff_meters = ((40075 * cos(lat_diff_radians) * 1000) / 360) * long_diff; // Difference in long (in meters)
+
+  rem_dis_meters = sqrt(lat_diff_meters * lat_diff_meters + long_diff_meters * long_diff_meters); // pythagorean theorem to calculate distance between the target point and current vehicle position
+  return rem_dis_meters;
 }
 
 void GPS_setup(void)
@@ -99,7 +134,7 @@ void GPS_setup(void)
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
 
   // Set the update rate
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); // 1 Hz update rate (can be change for up to 10Hz)
+  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_10HZ); // 10 Hz update rate (can be change for up to 10Hz)
 
   // Request updates on antenna status, comment out to keep quiet
   GPS.sendCommand(PGCMD_ANTENNA);
@@ -114,33 +149,35 @@ void store_coordinates(void)
 
   char c = GPS.read(); // storing the characters coming through the serial bus in a 'c' char.
 
-  if ((c) && (GPSECHO)) // this is underlined but probably not an issue...
+  if ((c) && (GPSECHO))
 
-  // if a sentence is received, we can check the checksum, parse it...
-  if (GPS.newNMEAreceived())
-  {
+    // if a sentence is received, we can check the checksum, parse it...
+    if (GPS.newNMEAreceived())
+    {
 
-    if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
-      return;                       // we can fail to parse a sentence in which case we should just wait for another
-  }
+      if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
+        return;                       // we can fail to parse a sentence in which case we should just wait for another
+    }
 
   if (GPS.fix)
-  { // GPS.fix returns the fix status, where 0 means no fix and 1 means there is a fix.
+  { // GPS.fix returns the fix status as true or false
+    Serial.println("WE GOT A FIX YAAAAAAAAAAAAAAAAAAAAAAY");
     lat_gps = GPS.latitude_fixed / 1.0E7;
-    // Serial.print(GPS.lat); // returns N/S for North/South (uncomment if needed)
+
     long_gps = GPS.longitude_fixed / 1.0E7;
-    // Serial.println(GPS.lon); // returns E/W for East/West (uncomment if needed)
+
     standby_flag = 0;
   }
   else
   { // Satellites not detected! Location data cannot be retreived!
     standby_flag = 1;
+    Serial.println("NO FIX");
   }
 }
 
 void boundary_check(void)
 { // check if the vehicle is out of bounds
-
+  store_coordinates();
   // TOP BOUNDARY
   if (lat_gps > (m1 * long_gps + c1))
   { // since it's our top line, our check is the same for any m, meaning the vehicle is outside if above the top line
@@ -216,26 +253,26 @@ void gradient_and_intercept_calc()
   float b1, b2, b3, b4; // b for calculating the gradient (denominator) y-latitude
 
   // Calculating the difference between longitudes(x) to get the numerator for calculating the gradient
-  a1 = LONG1 - LONG2;
-  a2 = LONG2 - LONG3;
-  a3 = LONG3 - LONG4;
-  a4 = LONG4 - LONG1;
+  a1 = boundaries[0].lon - boundaries[1].lon;
+  a2 = boundaries[1].lon - boundaries[2].lon;
+  a3 = boundaries[2].lon - boundaries[3].lon;
+  a4 = boundaries[3].lon - boundaries[0].lon;
   // Calculating the difference between latitudes(y) to get the denominator for calculating the gradient
-  b1 = LAT1 - LAT2;
-  b2 = LAT2 - LAT3;
-  b3 = LAT3 - LAT4;
-  b4 = LAT4 - LAT1;
+  b1 = boundaries[0].lat - boundaries[1].lat;
+  b2 = boundaries[1].lat - boundaries[2].lat;
+  b3 = boundaries[2].lat - boundaries[3].lat;
+  b4 = boundaries[3].lat - boundaries[0].lat;
   // Calculating the gradient m for each line
-  m1 = b1 / a1; // gradient of our top line       DEBUG Check: good
-  m2 = b2 / a2; // gradient of our right line     DEBUG Check: good
-  m3 = b3 / a3; // gradient of our bottom line    DEBUG Check: good
-  m4 = b4 / a4; // gradient of our left line      DEBUG Check: good
+  m1 = b1 / a1; // gradient of our top line
+  m2 = b2 / a2; // gradient of our right line
+  m3 = b3 / a3; // gradient of our bottom line
+  m4 = b4 / a4; // gradient of our left line
 
   // Calculating the intercept c for each line
-  c1 = LAT1 - m1 * LONG1; // intercept of our top line // NOTE: LONG AND LAT MIGHT NEED TO BE SWAPPED
-  c2 = LAT2 - m2 * LONG2; // intercept of our right line
-  c3 = LAT3 - m3 * LONG3; // intercept of our bottom line
-  c4 = LAT4 - m4 * LONG4; // intercept of our left line
+  c1 = boundaries[0].lat - m1 * boundaries[0].lon; // intercept of our top line // NOTE: LONG AND LAT MIGHT NEED TO BE SWAPPED
+  c2 = boundaries[1].lat - m2 * boundaries[1].lon; // intercept of our right line
+  c3 = boundaries[2].lat - m3 * boundaries[2].lon; // intercept of our bottom line
+  c4 = boundaries[3].lat - m4 * boundaries[3].lon; // intercept of our left line
 }
 
 // Notes: when referring to 'top' line and 'bottom' line, these are the top(North) and bottom(South) boundaries of the area of operation (AO).

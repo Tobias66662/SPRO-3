@@ -9,14 +9,11 @@
 #include "current.h"
 #include "navigation.h"
 #include "motor.h"
+#include "tests.h"
 
 #define PATH_RESOLUTION 1 //(IN METERS) Set the resolution of which the vehicle will clean the area (e.g., 0.5 corresponds to points 0.5 meters apart) This affects the magnitude of n1 and n2.
 
 // Globals
-extern Magnetometer *magnetometer;
-
-Navigation nav;
-
 float long_diff1, lat_diff1, long_diff2, lat_diff2; // temporary variables used for calculating the difference in longitude and latitude, which are then converted in meters
 
 extern int8_t obstacle_array[100]; // Obstacle array storing the starting and ending i1/i2 values where the obstacle was detected for both the top and bottom line
@@ -32,26 +29,30 @@ void i1_i2_init(int *i1, int *i2);
 
 void setup()
 {
-  Serial.begin(9600);
+  GPS_setup();                   // GPS intialiser (with a 1 sec delay to give the gps some time to execute all commands)
+  gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
+  // Serial.begin(9600); // this is already in GPS_setup
 
   Motor::initialize();
+  ADC_Init();
+
   magnetometer = new Magnetometer();
   nav = Navigation(magnetometer);
 
   flip_flag = 0;
   float lat_meters, long_meters, lat_diff_radians; // temporary variables used for calculating the difference in long and lat in meters, which will be used in calculating the number of points for the top and bottom line
 
-  lat_diff1 = LAT2 - LAT1;                                                   // Difference in lat (in degrees)
+  lat_diff1 = boundaries[1].lat - boundaries[0].lat;                         // Difference in lat (in degrees)
   lat_diff_radians = (lat_diff1 * PI) / 180;                                 // Difference in lat, but in radians, because the cos() function only takes radians
-  long_diff1 = LONG2 - LONG1;                                                // Difference in long (in degrees)
+  long_diff1 = boundaries[1].lon - boundaries[0].lon;                        // Difference in long (in degrees)
   lat_meters = lat_diff1 * 111000;                                           // Difference in lat (in meters)
   long_meters = ((40075 * cos(lat_diff_radians) * 1000) / 360) * long_diff1; // Difference in long (in meters)
 
   n1 = sqrt(lat_meters * lat_meters + long_meters * long_meters) / PATH_RESOLUTION; // number of array points for top line (Note: calculation returns a floating point number, but since n1 and n2 are an int, they will be rounded)
 
-  lat_diff2 = LAT3 - LAT4;                                                   // Difference in lat (in degrees)
+  lat_diff2 = boundaries[2].lat - boundaries[3].lat;                         // Difference in lat (in degrees)
   lat_diff_radians = (lat_diff2 * PI) / 180;                                 // Difference in lat (in rads)
-  long_diff2 = LONG3 - LONG4;                                                // Difference in long (in degrees)
+  long_diff2 = boundaries[2].lon - boundaries[3].lon;                        // Difference in long (in degrees)
   lat_meters = lat_diff2 * 111000;                                           // Difference in lat (in meters)
   long_meters = ((40075 * cos(lat_diff_radians) * 1000) / 360) * long_diff2; // Difference in long (in meters)
 
@@ -59,126 +60,58 @@ void setup()
 
   left_motor.toggle(true);
   right_motor.toggle(true);
-
-  GPS_setup();                   // GPS intialiser (with a 1 sec delay to give the gps some time to execute all commands)
-  gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
-}
-
-bool test_straight()
-{
-  static char i = 0;
-  if (i == 0)
-  {
-    nav.store_target();
-    i++;
-  }
-  nav.motor_control(0, 0, 0, true);
-  return true;
-}
-
-bool test_motors()
-{
-  left_motor.set_speed(255);
-  right_motor.set_speed(255);
-  left_motor.set_direction(1);
-  right_motor.set_direction(0);
-  // for (int i = 200; i < 255; i += 10)
-  // {
-  //   Serial.print("Duty cycle:");
-  //   Serial.println(i);
-  //   left_motor.set_speed(i);
-  //   right_motor.set_speed(i);
-  //   left_motor.set_direction(1);
-  //   right_motor.set_direction(1);
-  //   _delay_ms(1000);
-  // }
-  return true;
-}
-
-bool test_turn()
-{
-  float angle = magnetometer->get_angle();
-  for (size_t i = 0; i < 2; i++)
-  {
-    nav.turn(180);
-  }
-
-  left_motor.toggle(0);
-  right_motor.toggle(0);
-  return angle == magnetometer->get_angle();
-}
-
-bool test_magneto()
-{
-  Serial.println(magnetometer->get_angle());
-  return true;
 }
 
 void loop()
 {
   // test_magneto();
   // test_motors();
-  test_turn();
+  // test_turn();
   // test_straight();
 
   phase_one();
   // phase_two();
 }
 
+void check_gps()
+{
+  float begin = millis() + 5000;
+
+  while (standby_flag)
+  {
+    store_coordinates();
+
+    if (millis() > begin)
+    {
+      Serial.println("Waiting for GPS signal...");
+      begin = millis() + 5000;
+    }
+  }
+}
+
 void phase_one(void)
 {
-  boundary_check(); // needs to happen first to initialise the GPS, store the first coordinates and finally calculate the gradients and intercepts needed for the point arrays
-  check_angle();
-  // check_direction(); // Not needed for now
-
   int i1, i2;
+  check_gps();
   i1_i2_init(&i1, &i2);
 
   int8_t i = 0;
 
   while (((i1 >= 0) && (i2 >= 0)) && ((i1 <= n1) && (i1 <= n2)))
   {
-    Serial.println("Standby flag before standby flag check:");
-    Serial.print(standby_flag);
-    while (standby_flag)
-    {
-      store_coordinates(); // program gets stuck here (check millis() function which uses timer0 ) try using our delay() instead
-    }
-    Serial.println("Standby flag after standby flag turns to 0:");
-    Serial.print(standby_flag);
-    store_coordinates();
-    Serial.println("Latitude:");
-    Serial.print(lat_gps, 10);
-    Serial.println("Longitude:");
-    Serial.print(long_gps, 10);
+    check_gps();
+    Serial.print("Latitude: ");
+    Serial.println(lat_gps, 10);
+    Serial.print("Longitude: ");
+    Serial.println(long_gps, 10);
 
-    // getting the next point if it's not in initialize otherwise call find_closest
-    i1_i2_init(&i1, &i2);
-    Serial.println("i1, i2:");
-    Serial.println(i1, i2);
     get_next_point(&i1, &i2); // !!THIS NEEDS TO BE CALLED BEFORE FLIPPING THE FLAGS!!
 
-    if (flip_flag == 0) // flipping the flip_flag so we take turns between target points on the bottom line and target points on the top line
-    {
-      flip_flag = 1;
-    }
-    else
-    {
-      flip_flag = 0;
-    }
+    flip_flag = !flip_flag; // flip the flip flag 1/0
 
-    Serial.print("flip flag:");
-    Serial.println(flip_flag);
-
-    // DISABLED
-    // check_obstacles(&i, i1, i2); // !!THIS NEEDS TO BE CALLED AFTER FLIPPING THE FLAG!!
-    boundary_check();
-    check_angle();
-
-    nav.turn(angle_diff);
-    nav.motor_control(&i, i1, i2, true); // remove these ugly placeholders as a temporary
+    nav.turn(get_angle());
+    nav.straight(&i, i1, i2); // remove these ugly placeholders as a temporary
   }
-  Serial.print("Exit while loop. Ready for Phase two.");
 } // end of phase_one()
 
 void phase_two(void)
@@ -195,8 +128,8 @@ void get_next_point(int *i1, int *i2)
   case 1:
     if ((flip_flag == 0) && (*i1 <= n1))
     { // target point on top line
-      target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
-      target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+      target_point_lat = (boundaries[0].lat + (lat_diff1 / n1) * *i1);
+      target_point_long = (boundaries[0].lon + (long_diff1 / n1) * *i1);
       if (*i1 <= n1)
       {
         (*i1)++;
@@ -204,8 +137,8 @@ void get_next_point(int *i1, int *i2)
     }
     if ((flip_flag == 1) && (*i2 <= n2))
     { // target point on bottom line
-      target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
-      target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+      target_point_lat = (boundaries[3].lat + (lat_diff2 / n2) * *i2);
+      target_point_long = (boundaries[3].lon + (long_diff2 / n2) * *i2);
       if (*i2 <= 0)
       {
         (*i2)++;
@@ -215,8 +148,8 @@ void get_next_point(int *i1, int *i2)
   case 2:
     if ((flip_flag == 0) && (*i1 > 0))
     { // target point on top line
-      target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
-      target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+      target_point_lat = (boundaries[0].lat + (lat_diff1 / n1) * *i1);
+      target_point_long = (boundaries[0].lon + (long_diff1 / n1) * *i1);
       if (*i1 > 0)
       {
         (*i1)--;
@@ -224,8 +157,8 @@ void get_next_point(int *i1, int *i2)
     }
     if ((flip_flag == 1) && (*i2 > 0))
     { // target point on bottom line
-      target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
-      target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+      target_point_lat = (boundaries[3].lat + (lat_diff2 / n2) * *i2);
+      target_point_long = (boundaries[3].lon + (long_diff2 / n2) * *i2);
       if (*i2 > 0)
       {
         (*i2)--;
@@ -235,8 +168,8 @@ void get_next_point(int *i1, int *i2)
   case 3:
     if ((flip_flag == 0) && (*i2 > 0))
     { // target point on bottom line
-      target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
-      target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+      target_point_lat = (boundaries[3].lat + (lat_diff2 / n2) * *i2);
+      target_point_long = (boundaries[3].lon + (long_diff2 / n2) * *i2);
       if (*i2 > 0)
       {
         (*i2)--;
@@ -244,8 +177,8 @@ void get_next_point(int *i1, int *i2)
     }
     if ((flip_flag == 1) && (*i1 > 0))
     { // target point on top line
-      target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
-      target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+      target_point_lat = (boundaries[0].lat + (lat_diff1 / n1) * *i1);
+      target_point_long = (boundaries[0].lon + (long_diff1 / n1) * *i1);
       if (*i1 > 0)
       {
         (*i1)--;
@@ -255,8 +188,8 @@ void get_next_point(int *i1, int *i2)
   case 4:
     if ((flip_flag == 0) && (*i2 <= n2))
     { // target point on bottom line
-      target_point_lat = (LAT4 + (lat_diff2 / n2) * *i2);
-      target_point_long = (LONG4 + (long_diff2 / n2) * *i2);
+      target_point_lat = (boundaries[3].lat + (lat_diff2 / n2) * *i2);
+      target_point_long = (boundaries[3].lon + (long_diff2 / n2) * *i2);
       if (*i2 <= 0)
       {
         (*i2)++;
@@ -264,8 +197,8 @@ void get_next_point(int *i1, int *i2)
     }
     if ((flip_flag == 1) && (*i1 <= n1))
     { // target point on top line
-      target_point_lat = (LAT1 + (lat_diff1 / n1) * *i1);
-      target_point_long = (LONG1 + (long_diff1 / n1) * *i1);
+      target_point_lat = (boundaries[0].lat + (lat_diff1 / n1) * *i1);
+      target_point_long = (boundaries[0].lon + (long_diff1 / n1) * *i1);
       if (*i1 <= n1)
       {
         (*i1)++;

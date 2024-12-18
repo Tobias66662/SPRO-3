@@ -8,5 +8,7 @@
 void ADC_Init();
 float get_current();
 uint16_t readADC(uint8_t ADC_channel);
+bool voltage_reached(float);
+
 
 #endif
