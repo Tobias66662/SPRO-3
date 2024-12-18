@@ -15,6 +15,7 @@ bool checkForObstacle(uint8_t sensor, uint8_t distance_cm);
 void MUXState(uint8_t sensor);
 bool checkFrontSensors(uint8_t distance_cm);
 bool checkSideSensors(uint8_t distance_cm);
+void CaluclateSpeedOfSound();
 
 extern bool is_triggered;
 
