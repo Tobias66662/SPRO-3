@@ -15,6 +15,8 @@
 
 // Globals
 float long_diff1, lat_diff1, long_diff2, lat_diff2; // temporary variables used for calculating the difference in longitude and latitude, which are then converted in meters
+uint8_t start_index;
+bool travelling;
 
 extern int8_t obstacle_array[100]; // Obstacle array storing the starting and ending i1/i2 values where the obstacle was detected for both the top and bottom line
 // For example, if(bottom_area_blocked_f); i values are stored as obstacle[0]= (i1 start value), obstacle[1]= (i2 start value), obstacle[2]= (i1 end value), obstacle[3]= (i2 end value): all of this is for the first object. From obstacle[4] to obstacle[7], it will be info for the second object and so on...
@@ -60,16 +62,24 @@ void setup()
 
   left_motor.toggle(true);
   right_motor.toggle(true);
+  brush_motor.toggle(1);
 }
 
 void loop()
 {
-  // test_magneto();
+  test_magneto();
+  brush_motor.set_speed(0);
+
+  _delay_ms(1000);
+
+  brush_motor.set_speed(255);
+
+  _delay_ms(1000);
   // test_motors();
   // test_turn();
   // test_straight();
 
-  phase_one();
+  // phase_one();
   // phase_two();
 }
 
@@ -93,6 +103,7 @@ void phase_one(void)
 {
   int i1, i2;
   check_gps();
+  start_index = find_closest();
   i1_i2_init(&i1, &i2);
 
   int8_t i = 0;
@@ -120,10 +131,107 @@ void phase_two(void)
 
 } // end of phase_two()
 
+void reverse(int *i1, int *i2)
+{
+  target_point_lat = boundaries[start_index].lat;
+  target_point_long = boundaries[start_index].lon;
+  flip_flag = !flip_flag;
+
+  switch (start_index)
+  {
+  case 1:
+    if ((flip_flag == 0) && (*i1 <= n1))
+    {
+      if (*i1 <= n1)
+      {
+        (*i1)--;
+      }
+    }
+    if ((flip_flag == 1) && (*i2 <= n2))
+    {
+      if (*i2 <= 0)
+      {
+        (*i2)--;
+      }
+    }
+    break;
+  case 2:
+    if ((flip_flag == 0) && (*i1 > 0))
+    {
+      if (*i1 > 0)
+      {
+        (*i1)++;
+      }
+    }
+    if ((flip_flag == 1) && (*i2 > 0))
+    {
+      if (*i2 > 0)
+      {
+        (*i2)++;
+      }
+    }
+    break;
+  case 3:
+    if ((flip_flag == 0) && (*i2 > 0))
+    {
+      if (*i2 > 0)
+      {
+        (*i2)++;
+      }
+    }
+    if ((flip_flag == 1) && (*i1 > 0))
+    {
+      if (*i1 > 0)
+      {
+        (*i1)++;
+      }
+    }
+    break;
+  case 4:
+    if ((flip_flag == 0) && (*i2 <= n2))
+    {
+      if (*i2 <= 0)
+      {
+        (*i2)--;
+      }
+    }
+    if ((flip_flag == 1) && (*i1 <= n1))
+    {
+      if (*i1 <= n1)
+      {
+        (*i1)--;
+      }
+    }
+    break;
+  }
+}
+
 void get_next_point(int *i1, int *i2)
 {
-  nav.set_object_avoidance(true);
-  switch (find_closest())
+  // this is the first, and second iteration per phases
+  if (travelling)
+  {
+    nav.set_object_avoidance(true);
+    travelling = false;
+  }
+  else
+  {
+    nav.set_object_avoidance(false);
+  }
+
+  if (full_flag)
+  {
+    full_flag = false;
+    travelling = true;
+    nav.set_object_avoidance(true);
+
+    // todo once or twice?
+    reverse(i1, i2);
+    reverse(i1, i2);
+    return;
+  }
+
+  switch (start_index)
   {
   case 1:
     if ((flip_flag == 0) && (*i1 <= n1))

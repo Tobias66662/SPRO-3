@@ -1,6 +1,8 @@
 #if !defined(_MAGNETOMETER_H)
 #define _MAGNETOMETER_H
 
+#define DECLINATION 5.11f // magnetic declination in DK
+
 #include "i2cmaster.h"
 #include "Wire.h"
 

@@ -1,4 +1,5 @@
 #include "tests.h"
+#include "MMC34160PJ.h"
 
 Navigation nav;
 
@@ -20,7 +21,18 @@ bool test_motors()
   right_motor.set_speed(255);
   left_motor.set_direction(1);
   right_motor.set_direction(1);
+  _delay_ms(500);
+  left_motor.set_direction(0);
+  right_motor.set_direction(0);
+  _delay_ms(500);
+  left_motor.toggle(0);
+  right_motor.toggle(0);
+
+  brush_motor.set_speed(255);
   _delay_ms(1000);
+  brush_motor.toggle(0);
+
+  // add servo
   return true;
 }
 

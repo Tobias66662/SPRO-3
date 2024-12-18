@@ -10,7 +10,6 @@
 
 #define SIZE 3 // three coordinates
 #define CONVERSION 0.48828125
-#define DECLINATION 5.11f // magnetic declination in DK
 
 uint8_t Magnetometer::writeRegister(uint8_t reg, uint8_t val)
 {
