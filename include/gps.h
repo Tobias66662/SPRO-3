@@ -28,6 +28,7 @@ uint8_t find_closest();
 float distance_points(point, point);
 float remaining_distance();
 bool is_target_left();
+void print_location();
 
 extern point boundaries[];
 #endif

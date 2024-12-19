@@ -4,12 +4,6 @@ Navigation nav;
 
 bool test_straight() // TEST ========== IGNORE
 {
-  static char i = 0;
-  if (i == 0)
-  {
-    nav.store_target();
-    i++;
-  }
   nav.straight(0, 0, 0);
   return true;
 }

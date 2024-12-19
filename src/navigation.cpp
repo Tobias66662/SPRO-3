@@ -82,6 +82,7 @@ void Navigation::store_target(float offset)
         this->target += 360;
     Serial.print("Target stored: ");
     Serial.println(this->target);
+    Serial.println("################");
 }
 
 /**
@@ -107,7 +108,13 @@ bool is_border_hit()
 
 bool check_obstacles(int8_t *i, int i1, int i2)
 {
-    if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (obstacle_mode_f == 0))
+    if (!checkFrontSensors(DEFAULT_OBJECT_DISTANCE))
+    {
+        return false;
+    }
+
+    Serial.println("Object detected, aborting...");
+    if (obstacle_mode_f == 0)
     {
         obstacle_mode_f = 1;
         if (flip_flag == 0)
@@ -127,7 +134,7 @@ bool check_obstacles(int8_t *i, int i1, int i2)
 
         return true;
     }
-    else if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (bottom_area_blocked_f == 1) && (obstacle_mode_f == 1))
+    else if ((bottom_area_blocked_f == 1) && (obstacle_mode_f == 1))
     { // check when obstacle is no longer in the way and save those points
         if (bottomline_f == 0)
         { // here we know the vehicle is no longer being blocked by an object
@@ -139,7 +146,7 @@ bool check_obstacles(int8_t *i, int i1, int i2)
 
         return true;
     }
-    else if (checkFrontSensors(DEFAULT_OBJECT_DISTANCE) && (bottom_area_blocked_f == 0) && (obstacle_mode_f == 1))
+    else if ((bottom_area_blocked_f == 0) && (obstacle_mode_f == 1))
     {
         if (topline_f == 0)
         { // here we know the vehicle is no longer being blocked by an object
@@ -151,8 +158,6 @@ bool check_obstacles(int8_t *i, int i1, int i2)
 
         return true;
     }
-
-    return false;
 }
 
 void Navigation::avoid_obstacles()
@@ -160,7 +165,7 @@ void Navigation::avoid_obstacles()
     if (!checkFrontSensors(FRONT_COLLISION))
         return;
 
-    Serial.println("Object detected");
+    Serial.println("Object detected, avoiding...");
 
     char relevant_sensor = !is_target_left() ? LEFT_SENSOR : RIGHT_SENSOR;
     if (checkForObstacle((relevant_sensor == LEFT_SENSOR ? RIGHT_SENSOR : LEFT_SENSOR), TURNING_CIRCLE))
@@ -173,13 +178,13 @@ void Navigation::avoid_obstacles()
     turn(attempt);
 
     // go forward, if detained continue recursion otherwise undo
-    while (!checkFrontSensors(FRONT_COLLISION) || checkForObstacle(relevant_sensor, TURNING_CIRCLE))
+    while (!checkFrontSensors(FRONT_COLLISION) && checkForObstacle(relevant_sensor, TURNING_CIRCLE))
     {
         left_motor.set_direction(1);
         right_motor.set_direction(1);
 
-        left_motor.set_speed(200);
-        right_motor.set_speed(200);
+        left_motor.set_speed(CTRL_SIG_MIN);
+        right_motor.set_speed(CTRL_SIG_MIN);
     }
     left_motor.set_speed(0);
     right_motor.set_speed(0);
@@ -225,11 +230,13 @@ float Navigation::PID_control(int *prevT, int *eintegral, int *eprev)
  */
 void Navigation::straight(int8_t *i, int i1, int i2)
 {
+    store_target();
     int prevT = 0;
     int eintegral = 0;
     int eprev = 0;
     do
     {
+        print_location();
         float u = PID_control(&prevT, &eintegral, &eprev);
 
         float power = abs(u);
@@ -248,7 +255,7 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         float angle = get_offseted_angle();
         Serial.print("Offset: ");
         Serial.println(angle);
-        if (angle > 0)
+        if (angle < 0)
         {
             powerRight -= power; // if error 0 then decrease by zero
         }
@@ -268,21 +275,20 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         if (false && object_avoidance_mode)
         {
             brush_motor.toggle(0);
-            // target stays, object will be avoided
-            float temp = target;
             avoid_obstacles();
-            target = temp;
+            turn(get_angle());
         }
         else
         {
             brush_motor.toggle(1);
 
             // this case the obstacle will not be avoided, rather getting new target
-            if (false && check_obstacles(i, i1, i2))
+            if (check_obstacles(i, i1, i2))
                 break;
 
-            if (false && voltage_reached(BIN_TRIGGERED)) // todo needs to be adjusted
+            if (voltage_reached(BIN_TRIGGERED)) // todo needs to be adjusted
             {
+                Serial.println("Gate blocked");
                 full_flag = true;
                 break;
             }
@@ -298,7 +304,6 @@ void Navigation::straight(int8_t *i, int i1, int i2)
 void Navigation::turn(float angle) // todo ensure not getting stuck and lower cool_down
 {
     store_target(angle);
-    _delay_ms(3000);
 
     int prevT = 0;
     int eintegral = 0;

@@ -74,6 +74,15 @@ void GPS_setup(void);
 // Function Prototypes
 //====================
 
+void print_location()
+{
+  store_coordinates();
+  Serial.print("GPS: Lat ");
+  Serial.print(lat_gps);
+  Serial.print(" - Long ");
+  Serial.println(long_gps);
+}
+
 // checking if the target is to the left from the vehicle
 bool is_target_left()
 {
