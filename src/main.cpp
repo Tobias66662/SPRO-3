@@ -67,17 +67,29 @@ void setup()
   left_motor.toggle(true);
   right_motor.toggle(true);
   brush_motor.toggle(1);
+  Serial.println();
+  Serial.println("Start phase 1");
+  Serial.println();
 
-  nav.store_target();
   unsigned long start = millis();
   nav.straight(0, 0, 0);
+  brush_motor.toggle(0);
   timer = millis() - start;
+
+  Serial.println();
+  Serial.println("Started turning");
+  Serial.println();
 
   nav.set_object_avoidance(true);
   nav.turn(90);
   nav.turn(90);
 
-  nav.straight(0, 0, 0);
+  // Serial.println("Start phase 2");
+  // nav.straight(0, 0, 0);
+
+  Serial.println();
+  Serial.println("Emptying");
+  Serial.println();
 
   servo_motor.operate_servo(1);
   _delay_ms(1000);

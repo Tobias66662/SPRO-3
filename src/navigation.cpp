@@ -8,7 +8,7 @@
 
 #define CTRL_SIG_MAX 255   // max of value of 8 bits register
 #define CTRL_SIG_MIN 220   // min observed value for not stalling motors
-#define ATTEMPT_ANGLE 90   // attempt for avoid obstacle
+#define ATTEMPT_ANGLE 30   // attempt for avoid obstacle
 #define BIN_TRIGGERED 4    // measured value
 #define DISTANCE_REACHED 2 // meters of closeness when we consider the target hit
 #define ANGLE_REACHED 5    // degrees of closeness
@@ -83,6 +83,7 @@ void Navigation::store_target(float offset)
         this->target += 360;
     Serial.print("Target stored: ");
     Serial.println(this->target);
+    Serial.println("#############");
 }
 
 /**
@@ -156,6 +157,44 @@ bool check_obstacles(int8_t *i, int i1, int i2)
     return false;
 }
 
+void Navigation::avoid_obstaclesB()
+{
+    unsigned long start = millis();
+    unsigned long begin = start;
+
+    if (!checkFrontSensors(FRONT_COLLISION))
+        return;
+
+    Serial.println("Object detected");
+    int8_t attempt = 90 * -1;
+
+    turn(attempt);
+
+    start = millis();
+    while (millis() < start + 2000)
+    {
+        left_motor.set_direction(1);
+        right_motor.set_direction(1);
+
+        left_motor.set_speed(CTRL_SIG_MIN);
+        right_motor.set_speed(CTRL_SIG_MIN);
+    }
+    turn(attempt * -1);
+
+    start = millis();
+    while (millis() < start + 2000)
+    {
+        left_motor.set_direction(1);
+        right_motor.set_direction(1);
+
+        left_motor.set_speed(CTRL_SIG_MIN);
+        right_motor.set_speed(CTRL_SIG_MIN);
+    }
+
+    turn(attempt);
+    timer += millis() - begin;
+}
+
 void Navigation::avoid_obstacles()
 {
     unsigned long start = millis();
@@ -164,24 +203,26 @@ void Navigation::avoid_obstacles()
 
     Serial.println("Object detected");
 
-    char relevant_sensor = !is_target_left() ? LEFT_SENSOR : RIGHT_SENSOR;
-    if (checkForObstacle((relevant_sensor == LEFT_SENSOR ? RIGHT_SENSOR : LEFT_SENSOR), TURNING_CIRCLE))
+    char relevant_sensor = LEFT_SENSOR;
+    if (false && checkForObstacle((relevant_sensor == LEFT_SENSOR ? RIGHT_SENSOR : LEFT_SENSOR), TURNING_CIRCLE))
     {
         Serial.println("Vehicle stuck");
         return;
     }
 
-    int8_t attempt = ATTEMPT_ANGLE * (relevant_sensor == LEFT_SENSOR ? 1 : -1);
+    // look into this in main
+    int8_t attempt = ATTEMPT_ANGLE * -1;
     turn(attempt);
 
     // go forward, if detained continue recursion otherwise undo
-    while (!checkFrontSensors(FRONT_COLLISION) || checkForObstacle(relevant_sensor, TURNING_CIRCLE))
+    // MAIN
+    while (!checkFrontSensors(FRONT_COLLISION) && checkForObstacle(relevant_sensor, TURNING_CIRCLE))
     {
         left_motor.set_direction(1);
         right_motor.set_direction(1);
 
-        left_motor.set_speed(200);
-        right_motor.set_speed(200);
+        left_motor.set_speed(CTRL_SIG_MIN);
+        right_motor.set_speed(CTRL_SIG_MIN);
     }
     left_motor.set_speed(0);
     right_motor.set_speed(0);
@@ -192,7 +233,7 @@ void Navigation::avoid_obstacles()
     }
 
     turn(attempt * -1);
-    timer += start;
+    timer += millis() - start;
 }
 
 float Navigation::PID_control(int *prevT, int *eintegral, int *eprev)
@@ -228,6 +269,9 @@ float Navigation::PID_control(int *prevT, int *eintegral, int *eprev)
  */
 void Navigation::straight(int8_t *i, int i1, int i2)
 {
+    store_target();
+    // MAIN
+
     int prevT = 0;
     int eintegral = 0;
     int eprev = 0;
@@ -235,6 +279,11 @@ void Navigation::straight(int8_t *i, int i1, int i2)
     unsigned long start = millis();
     do
     {
+        store_coordinates();
+        Serial.print("GPS: Lat ");
+        Serial.print(lat_gps);
+        Serial.print(" - Long ");
+        Serial.println(long_gps);
         float u = PID_control(&prevT, &eintegral, &eprev);
 
         float power = abs(u);
@@ -253,7 +302,9 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         float angle = get_offseted_angle();
         Serial.print("Offset: ");
         Serial.println(angle);
-        if (angle > 0)
+
+        // MAIN
+        if (angle < 0)
         {
             powerRight -= power; // if error 0 then decrease by zero
         }
@@ -276,20 +327,22 @@ void Navigation::straight(int8_t *i, int i1, int i2)
             // target stays, object will be avoided
             float temp = target;
             avoid_obstacles();
+            // MAIN
             target = temp;
         }
         else
         {
             brush_motor.toggle(1);
-            brush_motor.set_speed(255);
-
+            brush_motor.set_speed(200);
             // this case the obstacle will not be avoided, rather getting new target
             if (false && check_obstacles(i, i1, i2))
                 break;
 
-            if (voltage_reached(BIN_TRIGGERED)) // todo needs to be adjusted
+            if (voltage_reached(BIN_TRIGGERED))
             {
                 full_flag = true;
+                Serial.println("Gate blocked");
+
                 break;
             }
         }
@@ -327,7 +380,8 @@ void Navigation::turn(float angle) // todo ensure not getting stuck and lower co
         float angle = get_offseted_angle();
         Serial.print("Offset: ");
         Serial.println(angle);
-        if (angle > 0)
+        // MAIN
+        if (angle < 0)
         {
             left_motor.set_direction(0);
             right_motor.set_direction(1);

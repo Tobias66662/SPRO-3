@@ -14,6 +14,7 @@ private:
     float target;
     float get_offseted_angle() const;
     float PID_control(int *, int *, int *);
+    void avoid_obstaclesB();
 
     bool object_avoidance_mode;
 
