@@ -31,13 +31,16 @@ void i1_i2_init(int *i1, int *i2);
 
 void setup()
 {
+  Serial.begin(9600); // this is already in GPS_setup
+
+  ultrasonicInit();
+  return;
+
   GPS_setup();                   // GPS intialiser (with a 1 sec delay to give the gps some time to execute all commands)
   gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
-  // Serial.begin(9600); // this is already in GPS_setup
 
-  Motor::initialize();
-  ultrasonicInit();
   ADC_Init();
+  Motor::initialize();
 
   magnetometer = new Magnetometer();
   nav = Navigation(magnetometer);
@@ -65,7 +68,7 @@ void setup()
   right_motor.toggle(true);
   brush_motor.toggle(1);
   // test_motors();
-  // test_turn();
+  test_turn();
   // test_straight();
 }
 
@@ -75,8 +78,8 @@ void loop()
   // phase_two();
 
   // test_magneto();
-  test_gate();
-  _delay_ms(100);
+  // test_gate();
+  test_ultrasonics();
 }
 
 void check_gps()

@@ -20,5 +20,6 @@ bool test_motors();
 bool test_turn();
 bool test_magneto();
 void test_gate();
+void test_ultrasonics();
 
 #endif // TESTS

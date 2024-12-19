@@ -26,7 +26,7 @@
 #define K_air 1.4    // Specific heat ratio
 
 #define Echo PB0 // Reflection pin
-#define Trig PB3 // Trigger pin
+#define Trig PD7 // Trigger pin
 
 // ################################________GLOBAL_VARIABLES________############################################
 
@@ -94,8 +94,6 @@ bool checkForObstacle(uint8_t sensor, uint8_t distance_cm)
 uint16_t getDistance(uint8_t sensor)
 {
   triggerSensor(sensor); // Trigger the ultrasonic sensor
-  Serial.println(pulse_width);
-  // Serial.println(k);
   return calculateDistance();
 }
 
@@ -106,11 +104,11 @@ void triggerSensor(uint8_t sensor)
   TIMSK1 |= (1 << TOIE1); // Enable timer overflow interupt
 
   // Send the trigger pusle
-  PORTB &= ~(1 << Trig); // makes sure the trigger pin is low
+  PORTD &= ~(1 << Trig); // makes sure the trigger pin is low
   _delay_us(2);
-  PORTB |= (1 << Trig);
+  PORTD |= (1 << Trig);
   _delay_us(10); // 10 microsecond delay to send out a 8 cycle ultrasonic burst
-  PORTB &= ~(1 << Trig);
+  PORTD &= ~(1 << Trig);
   _delay_ms(70); // Wait for echo pulse to complete (sensor delay) (max high period = 70ms)
 
   TIMSK1 &= ~(1 << TOIE1); // Disable timer overflow interupt
@@ -129,7 +127,7 @@ void ultrasonicInit()
   DDRB |= (1 << A_control) | (1 << B_control) | (1 << C_control);
   PORTB &= ~((1 << A_control) | (1 << B_control) | (1 << C_control));
   DDRB &= ~(1 << Echo); //  Configures the Echo pin to be an input
-  DDRB |= (1 << Trig);  //  Configures the Trig pin to be an output
+  DDRD |= (1 << Trig);  //  Configures the Trig pin to be an output
 
   // Timer 1 (input capture unit)
   TCCR1A = 0;                            // Normal mode
@@ -141,7 +139,7 @@ void ultrasonicInit()
   TCCR1B |= (1 << CS11);                 // Start timer with prescaler of 8
   sei();
 
-  CaluclateSpeedOfSound();
+  // CaluclateSpeedOfSound();
 }
 
 void MUXState(uint8_t sensor)

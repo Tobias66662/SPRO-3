@@ -7,9 +7,9 @@
 #include "current.h"
 
 #define CTRL_SIG_MAX 255   // max of value of 8 bits register
-#define CTRL_SIG_MIN 220   // min observed value for not stalling motors
+#define CTRL_SIG_MIN 255   // min observed value for not stalling motors
 #define ATTEMPT_ANGLE 90   // attempt for avoid obstacle
-#define BIN_TRIGGERED 5    // measured value
+#define BIN_TRIGGERED 4    // measured value
 #define DISTANCE_REACHED 2 // meters of closeness when we consider the target hit
 #define ANGLE_REACHED 5    // degrees of closeness
 #define COOL_DOWN 750      // cool down for the control loop, time out for the adjustments to make effect
@@ -89,11 +89,7 @@ void Navigation::store_target(float offset)
 float Navigation::get_offseted_angle() const
 {
     float angle = magnetometer->get_angle();
-    float res = convert(angle - this->target);
-    Serial.print(angle);
-    Serial.print(" - Offset: ");
-    Serial.println(res);
-    return res;
+    return convert(angle - this->target);
 }
 
 bool is_border_hit()
@@ -247,7 +243,11 @@ void Navigation::straight(int8_t *i, int i1, int i2)
 
         uint8_t powerLeft, powerRight;
         powerLeft = powerRight = UINT8_MAX;
-        if (get_offseted_angle())
+
+        float angle = get_offseted_angle();
+        Serial.print("Offset: ");
+        Serial.println(angle);
+        if (angle > 0)
         {
             powerRight -= power; // if error 0 then decrease by zero
         }
@@ -288,10 +288,13 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         }
 
         _delay_ms(COOL_DOWN);
-    } while ((object_avoidance_mode && remaining_distance() > DISTANCE_REACHED) || (!object_avoidance_mode && !is_border_hit())); // todo borderlines
+    } while ((object_avoidance_mode && remaining_distance() > DISTANCE_REACHED) || (!object_avoidance_mode && !is_border_hit()));
+
+    left_motor.set_speed(0);
+    right_motor.set_speed(0);
 }
 
-void Navigation::turn(float angle)
+void Navigation::turn(float angle) // todo ensure not getting stuck and lower cool_down
 {
     store_target(angle);
     _delay_ms(3000);
@@ -314,17 +317,20 @@ void Navigation::turn(float angle)
             power = CTRL_SIG_MIN;
         }
 
-        if (get_offseted_angle())
+        float angle = get_offseted_angle();
+        Serial.print("Offset: ");
+        Serial.println(angle);
+        if (angle > 0)
         {
             left_motor.set_direction(0);
             right_motor.set_direction(1);
-            Serial.println('L');
+            Serial.print('L');
         }
         else
         {
             left_motor.set_direction(1);
             right_motor.set_direction(0);
-            Serial.println('R');
+            Serial.print('R');
         }
 
         left_motor.set_speed(power);
@@ -335,6 +341,9 @@ void Navigation::turn(float angle)
 
         _delay_ms(COOL_DOWN);
     } while (eprev > ANGLE_REACHED);
+
+    left_motor.set_speed(0);
+    right_motor.set_speed(0);
 }
 
 // offseted angle pointing to the target
