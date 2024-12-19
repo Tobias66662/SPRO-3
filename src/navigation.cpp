@@ -23,6 +23,7 @@
 
 // declared in main
 int8_t obstacle_array[100]; // stores the i1 and i2 values when the obstacle_mode_f switches to 1 and stores them again to the next array elements when it switches back to 0
+unsigned long timer;
 
 // global
 bool flip_flag; // flag that flips to switch between targeting a point on the top line and the bottom line (check main to see when it's flipped)
@@ -35,7 +36,7 @@ Navigation::Navigation() {} // not used but necessary for compiler
 Navigation::Navigation(Magnetometer *magnetometer)
 {
     this->magnetometer = magnetometer;
-    this->object_avoidance_mode = true;
+    this->object_avoidance_mode = false;
 }
 
 void Navigation::set_object_avoidance(bool object_avoidance_mode)
@@ -157,6 +158,7 @@ bool check_obstacles(int8_t *i, int i1, int i2)
 
 void Navigation::avoid_obstacles()
 {
+    unsigned long start = millis();
     if (!checkFrontSensors(FRONT_COLLISION))
         return;
 
@@ -190,6 +192,7 @@ void Navigation::avoid_obstacles()
     }
 
     turn(attempt * -1);
+    timer += start;
 }
 
 float Navigation::PID_control(int *prevT, int *eintegral, int *eprev)
@@ -228,6 +231,8 @@ void Navigation::straight(int8_t *i, int i1, int i2)
     int prevT = 0;
     int eintegral = 0;
     int eprev = 0;
+
+    unsigned long start = millis();
     do
     {
         float u = PID_control(&prevT, &eintegral, &eprev);
@@ -265,7 +270,7 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         Serial.print(" - ");
         Serial.println(powerRight);
 
-        if (false && object_avoidance_mode)
+        if (object_avoidance_mode)
         {
             brush_motor.toggle(0);
             // target stays, object will be avoided
@@ -276,12 +281,13 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         else
         {
             brush_motor.toggle(1);
+            brush_motor.set_speed(255);
 
             // this case the obstacle will not be avoided, rather getting new target
             if (false && check_obstacles(i, i1, i2))
                 break;
 
-            if (false && voltage_reached(BIN_TRIGGERED)) // todo needs to be adjusted
+            if (voltage_reached(BIN_TRIGGERED)) // todo needs to be adjusted
             {
                 full_flag = true;
                 break;
@@ -289,7 +295,7 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         }
 
         _delay_ms(COOL_DOWN);
-    } while ((object_avoidance_mode && remaining_distance() > DISTANCE_REACHED) || (!object_avoidance_mode && !is_border_hit()));
+    } while ((object_avoidance_mode && millis() < start + timer) || (!object_avoidance_mode));
 
     left_motor.set_speed(0);
     right_motor.set_speed(0);

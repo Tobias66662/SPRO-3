@@ -18,6 +18,7 @@ float long_diff1, lat_diff1, long_diff2, lat_diff2; // temporary variables used 
 uint8_t start_index;
 bool travelling;
 
+extern unsigned long timer;
 extern int8_t obstacle_array[100]; // Obstacle array storing the starting and ending i1/i2 values where the obstacle was detected for both the top and bottom line
 // For example, if(bottom_area_blocked_f); i values are stored as obstacle[0]= (i1 start value), obstacle[1]= (i2 start value), obstacle[2]= (i1 end value), obstacle[3]= (i2 end value): all of this is for the first object. From obstacle[4] to obstacle[7], it will be info for the second object and so on...
 //              if(!bottom_area_blocked_f); i values are stored as obstacle [0]= (i2 start value), obstacle[1]= (i1 start value)...
@@ -66,9 +67,21 @@ void setup()
   left_motor.toggle(true);
   right_motor.toggle(true);
   brush_motor.toggle(1);
-  // test_motors();
-  // test_turn();
-  // test_straight();
+
+  nav.store_target();
+  unsigned long start = millis();
+  nav.straight(0, 0, 0);
+  timer = millis() - start;
+
+  nav.set_object_avoidance(true);
+  nav.turn(90);
+  nav.turn(90);
+
+  nav.straight(0, 0, 0);
+
+  servo_motor.operate_servo(1);
+  _delay_ms(1000);
+  servo_motor.operate_servo(0);
 }
 
 void loop()
