@@ -166,9 +166,11 @@ void MUXState(uint8_t sensor)
     break;
   case 6:
     PORTB = (PORTB & ~(1 << A_control)) | (1 << B_control) | (1 << C_control);
+    // Serial.print(" - Case 6 - ");
     break;
   case 7:
     PORTB |= (1 << A_control) | (1 << B_control) | (1 << C_control);
+    // Serial.print(" - Case 7 - ");
     break;
   }
   _delay_ms(10);

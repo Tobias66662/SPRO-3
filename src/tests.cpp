@@ -42,7 +42,7 @@ bool test_turn() // TEST ========== IGNORE
   float angle = magnetometer->get_angle();
   for (size_t i = 0; i < 3; i++)
   {
-    nav.turn(120);
+    nav.turn(240);
   }
 
   return angle == magnetometer->get_angle();
@@ -65,11 +65,13 @@ void test_ultrasonics()
 {
   for (int i = 0; i < 8; i++)
   {
-
     Serial.print("Object detected by sensor ");
     Serial.println(i);
     Serial.print("At distance ");
     Serial.println(getDistance(i));
+    Serial.print("At port ");
+    Serial.println(PORTB);
+
     _delay_ms(100);
   }
   _delay_ms(1000);

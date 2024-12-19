@@ -34,7 +34,6 @@ void setup()
   Serial.begin(9600); // this is already in GPS_setup
 
   ultrasonicInit();
-  return;
 
   GPS_setup();                   // GPS intialiser (with a 1 sec delay to give the gps some time to execute all commands)
   gradient_and_intercept_calc(); // getting gradients and intercepts for straight line equations
@@ -68,18 +67,19 @@ void setup()
   right_motor.toggle(true);
   brush_motor.toggle(1);
   // test_motors();
-  test_turn();
+  // test_turn();
   // test_straight();
 }
 
 void loop()
 {
+
   // phase_one();
   // phase_two();
 
   // test_magneto();
   // test_gate();
-  test_ultrasonics();
+  // test_ultrasonics();
 }
 
 void check_gps()

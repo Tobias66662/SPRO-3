@@ -7,7 +7,7 @@
 #include "current.h"
 
 #define CTRL_SIG_MAX 255   // max of value of 8 bits register
-#define CTRL_SIG_MIN 255   // min observed value for not stalling motors
+#define CTRL_SIG_MIN 220   // min observed value for not stalling motors
 #define ATTEMPT_ANGLE 90   // attempt for avoid obstacle
 #define BIN_TRIGGERED 4    // measured value
 #define DISTANCE_REACHED 2 // meters of closeness when we consider the target hit
@@ -35,6 +35,7 @@ Navigation::Navigation() {} // not used but necessary for compiler
 Navigation::Navigation(Magnetometer *magnetometer)
 {
     this->magnetometer = magnetometer;
+    this->object_avoidance_mode = true;
 }
 
 void Navigation::set_object_avoidance(bool object_avoidance_mode)
