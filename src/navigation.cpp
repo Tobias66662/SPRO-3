@@ -106,7 +106,7 @@ bool is_border_hit()
         return bottomline_f;
 }
 
-bool acheck_obstacles(int8_t *i, int i1, int i2)
+bool check_obstacles(int8_t *i, int i1, int i2)
 {
     if (!checkFrontSensors(DEFAULT_OBJECT_DISTANCE))
     {
@@ -158,6 +158,8 @@ bool acheck_obstacles(int8_t *i, int i1, int i2)
 
         return true;
     }
+
+    return false;
 }
 
 void Navigation::avoid_obstacles()
