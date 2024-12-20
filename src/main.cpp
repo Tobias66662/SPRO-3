@@ -86,7 +86,7 @@ void check_gps()
 {
   float begin = millis() + 5000;
 
-  while (standby_flag)
+  while (standby_flag) // perhaps disable motors here?
   {
     store_coordinates();
 
