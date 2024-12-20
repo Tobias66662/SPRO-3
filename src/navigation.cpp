@@ -272,7 +272,7 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         Serial.print(" - ");
         Serial.println(powerRight);
 
-        if (false && object_avoidance_mode)
+        if (object_avoidance_mode)
         {
             brush_motor.toggle(0);
             avoid_obstacles();
@@ -280,7 +280,13 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         }
         else
         {
+            unsigned long motor_demo = millis();
             brush_motor.toggle(1);
+
+            if (millis() > motor_demo + 1000)
+            {
+                brush_motor.set_speed(0);
+            }
 
             // this case the obstacle will not be avoided, rather getting new target
             if (check_obstacles(i, i1, i2))

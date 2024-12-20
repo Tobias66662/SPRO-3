@@ -74,7 +74,7 @@ void setup()
 void loop()
 {
 
-   phase_one();
+  phase_one();
   // phase_two();
 
   // test_magneto();
