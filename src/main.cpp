@@ -74,7 +74,7 @@ void setup()
 void loop()
 {
 
-  // phase_one();
+   phase_one();
   // phase_two();
 
   // test_magneto();
@@ -110,10 +110,7 @@ void phase_one(void)
   while (((i1 >= 0) && (i2 >= 0)) && ((i1 <= n1) && (i1 <= n2)))
   {
     check_gps();
-    Serial.print("Latitude: ");
-    Serial.println(lat_gps, 10);
-    Serial.print("Longitude: ");
-    Serial.println(long_gps, 10);
+    print_location();
 
     get_next_point(&i1, &i2); // !!THIS NEEDS TO BE CALLED BEFORE FLIPPING THE FLAGS!!
 
