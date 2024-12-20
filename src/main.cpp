@@ -215,7 +215,7 @@ void get_next_point(int *i1, int *i2)
     nav.set_object_avoidance(false);
   }
 
-  if (full_flag)
+  if (false && full_flag)
   {
     full_flag = false;
     travelling = true;
@@ -310,6 +310,10 @@ void get_next_point(int *i1, int *i2)
     }
     break;
   }
+  Serial.print("i ");
+  Serial.print(*i1);
+  Serial.print(" i2 ");
+  Serial.println(*i2);
 }
 
 void i1_i2_init(int *i1, int *i2)
