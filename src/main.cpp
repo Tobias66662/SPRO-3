@@ -74,9 +74,9 @@ void setup()
 void loop()
 {
 
-  phase_one();
+   phase_one();
   // phase_two();
-
+  // test_motors();
   // test_magneto();
   // test_gate();
   // test_ultrasonics();

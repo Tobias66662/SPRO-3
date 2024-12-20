@@ -15,18 +15,18 @@ bool test_motors()
   left_motor.set_direction(1);
   right_motor.set_direction(1);
   _delay_ms(1000);
-  left_motor.set_direction(0);
-  right_motor.set_direction(0);
-  _delay_ms(1000);
-  left_motor.set_speed(0);
-  right_motor.set_speed(0);
+  // left_motor.set_direction(0);
+  // right_motor.set_direction(0);
+  // _delay_ms(1000);
+  // left_motor.set_speed(0);
+  // right_motor.set_speed(0);
 
-  brush_motor.set_speed(255);
-  servo_motor.operate_servo(1);
+  // brush_motor.set_speed(255);
+  // servo_motor.operate_servo(1);
 
-  _delay_ms(1000);
-  brush_motor.set_speed(0);
-  servo_motor.operate_servo(0);
+  // _delay_ms(1000);
+  // brush_motor.set_speed(0);
+  // servo_motor.operate_servo(0);
 
   return true;
 }

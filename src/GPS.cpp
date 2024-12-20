@@ -108,7 +108,7 @@ uint8_t find_closest()
   float distance = INFINITY;
   for (size_t i = 0; i < 4; i++)
   {
-    if (distance < distance_points(point(lat_gps, long_gps), boundaries[i]))
+    if (distance > distance_points(point(lat_gps, long_gps), boundaries[i]))
     {
       distance = distance_points(point(lat_gps, long_gps), boundaries[i]);
       closest = i+1;
