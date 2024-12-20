@@ -274,6 +274,15 @@ void gradient_and_intercept_calc()
   m2 = b2 / a2; // gradient of our right line
   m3 = b3 / a3; // gradient of our bottom line
   m4 = b4 / a4; // gradient of our left line
+  Serial.println("Gradients");
+  Serial.print("m1: ");
+  Serial.println(m1);
+  Serial.print("m2: ");
+  Serial.println(m2);
+  Serial.print("m3: ");
+  Serial.println(m3);
+  Serial.print("m4: ");
+  Serial.println(m4);
 
   // Calculating the intercept c for each line
   c1 = boundaries[0].lat - m1 * boundaries[0].lon; // intercept of our top line // NOTE: LONG AND LAT MIGHT NEED TO BE SWAPPED

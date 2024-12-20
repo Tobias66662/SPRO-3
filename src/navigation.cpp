@@ -7,10 +7,10 @@
 #include "current.h"
 
 #define CTRL_SIG_MAX 255   // max of value of 8 bits register
-#define CTRL_SIG_MIN 220   // min observed value for not stalling motors
+#define CTRL_SIG_MIN 240   // min observed value for not stalling motors
 #define ATTEMPT_ANGLE 90   // attempt for avoid obstacle
 #define BIN_TRIGGERED 4    // measured value
-#define DISTANCE_REACHED 2 // meters of closeness when we consider the target hit
+#define DISTANCE_REACHED 1 // meters of closeness when we consider the target hit
 #define ANGLE_REACHED 5    // degrees of closeness
 #define COOL_DOWN 750      // cool down for the control loop, time out for the adjustments to make effect
 #define TURNING_CIRCLE 20  // space necessary for turning around
@@ -69,7 +69,7 @@ float convert(float angle)
 void Navigation::store_target(float offset)
 {
     float current_angle = magnetometer->get_angle();
-    Serial.print("Devices current angle: ");
+    Serial.print("Azimuth: ");
     Serial.println(current_angle);
     if (abs(offset) > 360)
         offset = (int)floor(abs(offset)) % 360;
@@ -80,9 +80,9 @@ void Navigation::store_target(float offset)
         this->target -= 360;
     else if (this->target < 0)
         this->target += 360;
-    Serial.print("Target stored: ");
-    Serial.println(this->target);
-    Serial.println("################");
+    // Serial.print("Target stored: ");
+    // Serial.println(this->target);
+    // Serial.println("################");
 }
 
 /**
@@ -255,8 +255,8 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         powerLeft = powerRight = UINT8_MAX;
 
         float angle = get_offseted_angle();
-        Serial.print("Offset: ");
-        Serial.println(angle);
+        // Serial.print("Offset: ");
+        // Serial.println(angle);
         if (angle < 0)
         {
             powerRight -= power; // if error 0 then decrease by zero
@@ -270,9 +270,9 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         left_motor.set_speed(powerLeft);
         right_motor.set_speed(powerRight);
 
-        Serial.print(powerLeft);
-        Serial.print(" - ");
-        Serial.println(powerRight);
+        //Serial.print(powerLeft);
+        //Serial.print(" - ");
+        //Serial.println(powerRight);
 
         if (object_avoidance_mode)
         {
@@ -303,7 +303,12 @@ void Navigation::straight(int8_t *i, int i1, int i2)
         }
 
         _delay_ms(COOL_DOWN);
-    } while ((object_avoidance_mode && remaining_distance() > DISTANCE_REACHED) || (!object_avoidance_mode && !is_border_hit()));
+
+        Serial.print("Remaining distance: ");
+        Serial.print(remaining_distance()); // might not work (assign to an int first)
+        Serial.println(" meters");
+
+    } while (/* (object_avoidance_mode && ( */remaining_distance() > DISTANCE_REACHED/* )) || (!object_avoidance_mode && !is_border_hit() ) */);
 
     left_motor.set_speed(0);
     right_motor.set_speed(0);

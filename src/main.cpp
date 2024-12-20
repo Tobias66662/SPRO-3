@@ -114,6 +114,7 @@ void phase_one(void)
   Serial.println(i2);
 
   int8_t i = 0;
+  Serial.println("=========================");
 
   while (((i1 >= 0) && (i2 >= 0)) && ((i1 <= n1) && (i1 <= n2)))
   {
@@ -121,7 +122,12 @@ void phase_one(void)
     print_location();
 
     get_next_point(&i1, &i2); // !!THIS NEEDS TO BE CALLED BEFORE FLIPPING THE FLAGS!!
-    Serial.println("After get_next_point() -- Updated values for i1 and i2:");
+    Serial.print("Target point coordinates:");
+    Serial.print(target_point_lat);
+    Serial.print(", ");
+    Serial.println(target_point_long);
+
+    Serial.println("Updated i1 and i2:");
     Serial.print("i1: ");
     Serial.println(i1);
     Serial.print("i2: ");
@@ -129,11 +135,11 @@ void phase_one(void)
 
     flip_flag = !flip_flag; // flip the flip flag 1/0
 
-    Serial.print("Flipping the flag:");
     Serial.print("flip_flag: ");
     Serial.println(flip_flag);
 
     nav.turn(get_angle());
+    Serial.println("Facing the target point -- Now go straight towards it");
     nav.straight(&i, i1, i2); // remove these ugly placeholders as a temporary
   }
 } // end of phase_one()
