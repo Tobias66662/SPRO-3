@@ -77,10 +77,10 @@ void GPS_setup(void);
 void print_location()
 {
   store_coordinates();
-  Serial.print("GPS: Lat ");
-  Serial.print(lat_gps);
-  Serial.print(" - Long ");
-  Serial.println(long_gps);
+  Serial.print("GPS coordinates: ");
+  Serial.print(lat_gps, 10);
+  Serial.print(", ");
+  Serial.println(long_gps, 10);
 }
 
 // checking if the target is to the left from the vehicle
@@ -111,7 +111,7 @@ uint8_t find_closest()
     if (distance < distance_points(point(lat_gps, long_gps), boundaries[i]))
     {
       distance = distance_points(point(lat_gps, long_gps), boundaries[i]);
-      closest = i;
+      closest = i+1;
     }
   }
 

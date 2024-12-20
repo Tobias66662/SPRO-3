@@ -103,7 +103,15 @@ void phase_one(void)
   int i1, i2;
   check_gps();
   start_index = find_closest();
+  Serial.print("Start Index: ");
+  Serial.println(start_index);
+
   i1_i2_init(&i1, &i2);
+  Serial.println("Initial values for i1 and i2:");
+  Serial.print("i1: ");
+  Serial.println(i1);
+  Serial.print("i2: ");
+  Serial.println(i2);
 
   int8_t i = 0;
 
@@ -113,8 +121,17 @@ void phase_one(void)
     print_location();
 
     get_next_point(&i1, &i2); // !!THIS NEEDS TO BE CALLED BEFORE FLIPPING THE FLAGS!!
+    Serial.println("After get_next_point() -- Updated values for i1 and i2:");
+    Serial.print("i1: ");
+    Serial.println(i1);
+    Serial.print("i2: ");
+    Serial.println(i2);
 
     flip_flag = !flip_flag; // flip the flip flag 1/0
+
+    Serial.print("Flipping the flag:");
+    Serial.print("flip_flag: ");
+    Serial.println(flip_flag);
 
     nav.turn(get_angle());
     nav.straight(&i, i1, i2); // remove these ugly placeholders as a temporary
@@ -205,7 +222,7 @@ void reverse(int *i1, int *i2)
 void get_next_point(int *i1, int *i2)
 {
   // this is the first, and second iteration per phases
-  if (travelling)
+  if (false && travelling) // disabled for now
   {
     nav.set_object_avoidance(true);
     travelling = false;
@@ -215,7 +232,7 @@ void get_next_point(int *i1, int *i2)
     nav.set_object_avoidance(false);
   }
 
-  if (false && full_flag)
+  if (false && full_flag) // disabled for now
   {
     full_flag = false;
     travelling = true;
@@ -310,10 +327,6 @@ void get_next_point(int *i1, int *i2)
     }
     break;
   }
-  Serial.print("i ");
-  Serial.print(*i1);
-  Serial.print(" i2 ");
-  Serial.println(*i2);
 }
 
 void i1_i2_init(int *i1, int *i2)
